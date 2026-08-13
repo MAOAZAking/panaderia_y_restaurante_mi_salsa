@@ -8,7 +8,6 @@ from datetime import datetime
 # ==========================================
 # CONFIGURACIÓN DE RUTAS Y ARCHIVOS JSON
 # ==========================================
-# Esto asegura que si lo conviertes en .exe, los .json se guarden junto al .exe y no se pierdan
 if getattr(sys, 'frozen', False):
     application_path = os.path.dirname(sys.executable)
 else:
@@ -17,7 +16,6 @@ else:
 PROD_JSON = os.path.join(application_path, "productos_y_precios.json")
 CLI_JSON = os.path.join(application_path, "clientes.json")
 
-# Generar JSONs por defecto si no existen
 if not os.path.exists(PROD_JSON):
     datos_base_prod = {
         "pan cacho": {"precio": 1700},
@@ -52,7 +50,6 @@ class AppFacturacion:
         self.construir_interfaz()
         self.actualizar_vista_factura()
         
-        # Iniciar foco en cantidad
         self.entry_cant.focus_set()
 
     def cargar_json(self, ruta):
@@ -64,11 +61,9 @@ class AppFacturacion:
             json.dump(datos, f, indent=4)
 
     def construir_interfaz(self):
-        # Marco izquierdo (Controles)
         frame_izq = tk.Frame(self.root, bg="#f4f4f4", padx=20, pady=20)
         frame_izq.pack(side="left", fill="both", expand=True)
 
-        # Marco derecho (Vista de factura)
         frame_der = tk.Frame(self.root, bg="white", padx=10, pady=10, relief="sunken", borderwidth=2)
         frame_der.pack(side="right", fill="both", expand=True, padx=20, pady=20)
 
@@ -81,14 +76,14 @@ class AppFacturacion:
         self.entry_cant.pack(fill="x", pady=5)
         self.entry_cant.bind("<Return>", self.on_cant_enter)
 
-        # 2. Producto (Con autocompletado simulado por Listbox)
+        # 2. Producto
         tk.Label(frame_izq, text="Producto:", bg="#f4f4f4").pack(anchor="w", pady=(10,0))
         self.entry_prod = tk.Entry(frame_izq, font=("Arial", 12))
         self.entry_prod.pack(fill="x", pady=5)
         
         self.listbox_prod = tk.Listbox(frame_izq, height=4, font=("Arial", 11))
         self.listbox_prod.pack(fill="x")
-        self.listbox_prod.pack_forget() # Oculto por defecto
+        self.listbox_prod.pack_forget() 
         
         self.entry_prod.bind("<KeyRelease>", self.filtrar_productos)
         self.entry_prod.bind("<Down>", lambda e: self.listbox_prod.focus_set() if self.listbox_prod.winfo_ismapped() else None)
@@ -101,24 +96,19 @@ class AppFacturacion:
         self.entry_precio.pack(fill="x", pady=5)
         self.entry_precio.bind("<Return>", self.agregar_producto_a_factura)
 
-        # Separador
         tk.Frame(frame_izq, height=2, bg="#ccc").pack(fill="x", pady=20)
 
-        # 4. Domicilio Checkbox
-        self.var_domicilio = tk.BooleanVar()
-        tk.Checkbutton(frame_izq, text="¿Aplica Domicilio? (Si no hay almuerzo, suma $1000)", variable=self.var_domicilio, bg="#f4f4f4").pack(anchor="w")
 
-        # 5. Forma de Pago
+        # 4. Forma de Pago
         tk.Label(frame_izq, text="Forma de Pago (Efectivo/Nequi):", bg="#f4f4f4").pack(anchor="w", pady=(10,0))
         self.entry_pago = tk.Entry(frame_izq, font=("Arial", 12))
-        self.entry_pago.insert(0, "Efectivo")
         self.entry_pago.pack(fill="x", pady=5)
         self.entry_pago.bind("<KeyRelease>", self.toggle_pago)
         self.entry_pago.bind("<Up>", self.toggle_pago_flechas)
         self.entry_pago.bind("<Down>", self.toggle_pago_flechas)
-        self.entry_pago.bind("<Return>", lambda e: self.entry_cliente.focus_set())
+        self.entry_pago.bind("<Return>", self.validar_pago) # <-- Validación estricta
 
-        # 6. Cliente
+        # 5. Cliente
         tk.Label(frame_izq, text="Cliente:", bg="#f4f4f4").pack(anchor="w", pady=(10,0))
         self.entry_cliente = tk.Entry(frame_izq, font=("Arial", 12))
         self.entry_cliente.pack(fill="x", pady=5)
@@ -132,7 +122,7 @@ class AppFacturacion:
         self.listbox_cli.bind("<Return>", self.seleccionar_cliente)
         self.entry_cliente.bind("<Return>", self.finalizar_factura)
 
-        # --- VISTA DERECHA (FACTURA) ---
+        # --- VISTA DERECHA ---
         self.txt_factura = tk.Text(frame_der, font=("Courier", 10), state="disabled", bg="white")
         self.txt_factura.pack(fill="both", expand=True)
 
@@ -141,7 +131,6 @@ class AppFacturacion:
         cant = self.entry_cant.get().strip()
         if cant == "":
             self.entry_pago.focus_set()
-            self.entry_pago.select_range(0, tk.END)
         else:
             self.entry_prod.focus_set()
 
@@ -212,16 +201,14 @@ class AppFacturacion:
         precio_total = int(precio_total_str)
         cant = int(cant)
         
-                # Si el producto es nuevo, calcular valor unitario y guardar
         if prod not in self.productos_db:
             precio_unitario = precio_total // cant
             self.productos_db[prod] = {"precio": precio_unitario}
             self.guardar_json(PROD_JSON, self.productos_db)
-            self.sincronizar_con_github()  # <--- AÑADE ESTA LÍNEA AQUÍ
+            self.sincronizar_con_github()
             
         self.factura_items.append({"cant": cant, "prod": prod, "precio": precio_total})
         
-        # Limpiar y volver a cantidad
         self.entry_cant.delete(0, tk.END)
         self.entry_prod.delete(0, tk.END)
         self.entry_precio.delete(0, tk.END)
@@ -229,6 +216,7 @@ class AppFacturacion:
         self.entry_cant.focus_set()
 
     def toggle_pago(self, event):
+        if event.keysym in ["Return", "Up", "Down"]: return
         val = self.entry_pago.get().lower()
         if val == "e":
             self.entry_pago.delete(0, tk.END)
@@ -244,6 +232,21 @@ class AppFacturacion:
             self.entry_pago.insert(0, "Nequi")
         else:
             self.entry_pago.insert(0, "Efectivo")
+
+    def validar_pago(self, event):
+        val = self.entry_pago.get().strip().lower()
+        if val in ["e", "efectivo"]:
+            self.entry_pago.delete(0, tk.END)
+            self.entry_pago.insert(0, "Efectivo")
+            self.entry_cliente.focus_set()
+        elif val in ["n", "nequi"]:
+            self.entry_pago.delete(0, tk.END)
+            self.entry_pago.insert(0, "Nequi")
+            self.entry_cliente.focus_set()
+        else:
+            messagebox.showwarning("Atención", "Escriba 'e' para Efectivo o 'n' para Nequi.")
+            self.entry_pago.focus_set()
+        return "break"
 
     def filtrar_clientes(self, event):
         if event.keysym in ["Down", "Up", "Return"]: return
@@ -275,44 +278,48 @@ class AppFacturacion:
             fecha_str = fecha_hora.strftime("%d/%m/%Y")
             hora_str = fecha_hora.strftime("%H:%M")
 
-        texto = f"""   PANADERIA Y RESTAURANTE
-          MI SALSA
+        texto = f"""        PANADERIA Y RESTAURANTE
+                MI SALSA
 ---------------------------------------
 EDWARD ARROYAVE
 NIT:1130598879
 FECHA:{fecha_str} HORA: {hora_str}
 VENDEDOR: MIGUEL
----------------------------------------
-Cantidad Producto               $precio
 ---------------------------------------\n"""
         
         suma = 0
         hay_almuerzo = False
         
-        # Procesar items
-        for item in self.factura_items:
-            suma += item["precio"]
-            if "almuerzo" in item["prod"].lower():
-                hay_almuerzo = True
-            
-            # Formateo alineado a la derecha
-            linea_prod = f'{item["cant"]} {item["prod"].title()}'
-            # Cortar si es muy largo para que no rompa la alineación
-            if len(linea_prod) > 28: linea_prod = linea_prod[:28]
-            
-            espacios = 39 - len(linea_prod) - len(str(item["precio"])) - 1
-            texto += f'{linea_prod}{" "*espacios}${item["precio"]}\n'
+        # --- Lógica de Placeholders y Productos ---
+        if not self.factura_items:
+            # Aquí aparece el "placeholder" cuando no hay nada
+            texto += "   Cant. Producto        $precio\n"
+        else:
+            # Si hay productos, los lista
+            for item in self.factura_items:
+                suma += item["precio"]
+                # Convertimos a minúsculas y validamos ambas opciones
+                if "almuerzo" in item["prod"].lower() or "bandeja" in item["prod"].lower():
+                    hay_almuerzo = True
+                
+                linea_prod = f'{item["cant"]} {item["prod"].title()}'
+                if len(linea_prod) > 28: linea_prod = linea_prod[:28]
+                
+                espacios = 39 - len(linea_prod) - len(str(item["precio"])) - 1
+                texto += f'{linea_prod}{" "*espacios}${item["precio"]}\n'
 
-        # Lógica del domicilio
-        if self.var_domicilio.get() and not hay_almuerzo:
-            texto += f'1 Domicilio{" "*27}$1000\n'
-            suma += 1000
+            # --- Lógica automática de Domicilio ---
+            # Si hay al menos un producto, y no hay almuerzo, se suma el domicilio
+            if not hay_almuerzo and len(self.factura_items) > 0:
+                texto += f'1 Domicilio{" "*23}$1000\n'
+                suma += 1000
 
-        texto += "---------------------------------------\n"
+        texto += "\n---------------------------------------\n"
         
-        suma_str = f'TOTAL:{" "*26}${suma}'
+        suma_str = f'TOTAL:{" "*20}${suma}'
         texto += f'{suma_str}\n'
-        texto += f'FORMA PAGO: {pago if pago else "Efectivo o nequi"}\n'
+        texto += "---------------------------------------\n\n"
+        texto += f'FORMA PAGO: {pago if pago else ""}\n'
         texto += f'CLIENTE: {cliente if cliente else "Nombre"}\n'
 
         self.txt_factura.config(state="normal")
@@ -330,28 +337,26 @@ Cantidad Producto               $precio
             messagebox.showerror("Error", "Ingrese el nombre del cliente.")
             return
 
-        # Guardar cliente si es nuevo
         if cliente not in self.clientes_db:
             self.clientes_db.append(cliente)
             self.guardar_json(CLI_JSON, self.clientes_db)
-            self.sincronizar_con_github()  # <--- AÑADE ESTA LÍNEA AQUÍ
+            self.sincronizar_con_github()
 
         ahora = datetime.now()
         texto_final = self.actualizar_vista_factura(pago, cliente, ahora)
 
-        # Generar nombre de archivo ej: Hector_TMV_12_08_2026_21_09.txt
         nombre_cliente_limpio = cliente.replace(" ", "_")
         str_fecha = ahora.strftime("%d_%m_%Y_%H_%M")
         nombre_archivo = f"{nombre_cliente_limpio}_{str_fecha}.txt"
         ruta_archivo = os.path.join(application_path, nombre_archivo)
 
-        # Guardar archivo
         with open(ruta_archivo, "w", encoding="utf-8") as f:
             f.write(texto_final)
 
-        # Mandar a imprimir (Abre el cuadro de diálogo por defecto del sistema)
         try:
             os.startfile(ruta_archivo, "print")
+            # Mensaje que pausa el flujo, te confirma que ya se envió y deja listo para la próxima
+            messagebox.showinfo("Factura Lista", f"¡Comprobante generado y enviado a la impresora!\n\nSe guardó como: {nombre_archivo}\n\nPresione Aceptar para limpiar y continuar.")
         except Exception as e:
             messagebox.showinfo("Atención", f"Factura guardada como {nombre_archivo}\n(No se pudo iniciar la impresora automáticamente)")
 
@@ -363,18 +368,16 @@ Cantidad Producto               $precio
         self.entry_cliente.delete(0, tk.END)
         self.entry_pago.delete(0, tk.END)
         self.entry_pago.insert(0, "Efectivo")
-        self.var_domicilio.set(False)
         
+        # AQUÍ ESTÁ LA ORDEN CLAVE:
         self.actualizar_vista_factura()
         self.entry_cant.focus_set()
     
     def sincronizar_con_github(self):
-        """Sincroniza los archivos JSON directamente con la API de GitHub usando un token externo."""
         import urllib.request
         import base64
         import json
 
-        # 1. Intentar leer el token desde el archivo de configuración externo junto al .exe
         ruta_config = os.path.join(application_path, "config.json")
         if not os.path.exists(ruta_config):
             print("Error: No se encontró el archivo config.json con el token de acceso.")
@@ -392,7 +395,6 @@ Cantidad Producto               $precio
             print("Error: El token en config.json no es válido.")
             return
 
-        # CONFIGURACIÓN DE TU REPOSITORIO
         USUARIO = "MAOAZAking"
         REPO = "panaderia_y_restaurante_mi_salsa"
         
@@ -411,14 +413,13 @@ Cantidad Producto               $precio
             if not os.path.exists(ruta_local):
                 continue
 
-            url = f"https://github.com{USUARIO}/{REPO}/contents/{nombre_github}"
+            # Corrección aplicada a la URL de la API de GitHub
+            url = f"https://api.github.com/repos/{USUARIO}/{REPO}/contents/{nombre_github}"
 
             try:
-                # Leer el contenido del archivo local y codificarlo en Base64
                 with open(ruta_local, "rb") as f:
                     contenido_base64 = base64.b64encode(f.read()).decode("utf-8")
 
-                # Consultar a GitHub si el archivo ya existe para obtener su "sha"
                 req_get = urllib.request.Request(url, headers=headers)
                 sha = None
                 try:
@@ -429,7 +430,6 @@ Cantidad Producto               $precio
                     if e.code != 404:
                         raise e
 
-                # Preparar los datos para subir o actualizar el archivo
                 payload = {
                     "message": "Actualización automática desde el sistema de facturación",
                     "content": contenido_base64,
@@ -438,7 +438,6 @@ Cantidad Producto               $precio
                 if sha:
                     payload["sha"] = sha
 
-                # Enviar la actualización a GitHub mediante un método PUT
                 data_json = json.dumps(payload).encode("utf-8")
                 req_put = urllib.request.Request(url, data=data_json, headers=headers, method="PUT")
                 
