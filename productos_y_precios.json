@@ -8,5 +8,20 @@
             "cantidad": 3,
             "precio_promo": 2000
         }
+    },
+    "coca-cola 1.5l": {
+        "precio": 8000
+    },
+    "coca-cola personal": {
+        "precio": 3200
+    },
+    "leche mediana": {
+        "precio": 3200
+    },
+    "almuerzo completo": {
+        "precio": 16000
+    },
+    "bandeja": {
+        "precio": 7000
     }
 }
