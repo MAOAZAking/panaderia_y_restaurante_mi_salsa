@@ -1,0 +1,12 @@
+{
+    "pan cacho": {
+        "precio": 1700
+    },
+    "pan agridulce": {
+        "precio": 700,
+        "promocion": {
+            "cantidad": 3,
+            "precio_promo": 2000
+        }
+    }
+}
