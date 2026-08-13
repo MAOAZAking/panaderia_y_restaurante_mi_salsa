@@ -367,7 +367,6 @@ VENDEDOR: MIGUEL
         self.entry_precio.delete(0, tk.END)
         self.entry_cliente.delete(0, tk.END)
         self.entry_pago.delete(0, tk.END)
-        self.entry_pago.insert(0, "Efectivo")
         
         # AQUÍ ESTÁ LA ORDEN CLAVE:
         self.actualizar_vista_factura()
