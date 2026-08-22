@@ -9,6 +9,13 @@
             "precio_promo": 2000
         }
     },
+    "borracho": {
+        "precio": 700,
+        "promocion": {
+            "cantidad": 3,
+            "precio_promo": 2000
+        }
+    },
     "coca-cola 1.5l": {
         "precio": 8000
     },
@@ -17,6 +24,9 @@
     },
     "leche mediana": {
         "precio": 3200
+    },
+    "leche 1l": {
+        "precio": 6500
     },
     "almuerzo completo": {
         "precio": 16000

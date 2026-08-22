@@ -123,8 +123,11 @@ class AppFacturacion:
         self.entry_cliente.bind("<Return>", self.finalizar_factura)
 
         # --- VISTA DERECHA ---
-        self.txt_factura = tk.Text(frame_der, font=("Courier", 10), state="disabled", bg="white")
+        self.txt_factura = tk.Text(frame_der, font=("Courier", 10), state="disabled", bg="white", wrap="word")
         self.txt_factura.pack(fill="both", expand=True)
+        # Enlazamos el doble clic en el área de texto para editar/eliminar productos
+        self.txt_factura.bind("<Double-Button-1>", self.interactuar_factura_click)
+
 
     # --- LÓGICA DE EVENTOS ---
     def on_cant_enter(self, event):
@@ -278,14 +281,14 @@ class AppFacturacion:
             fecha_str = fecha_hora.strftime("%d/%m/%Y")
             hora_str = fecha_hora.strftime("%H:%M")
 
-        texto = f"""        PANADERIA Y RESTAURANTE
-                MI SALSA
----------------------------------------
+        texto = f"""PANADERIA Y RESTAURANTE
+      MI SALSA
+-------------------
 EDWARD ARROYAVE
 NIT:1130598879
 FECHA:{fecha_str} HORA: {hora_str}
 VENDEDOR: MIGUEL
----------------------------------------\n"""
+-------------------\n"""
         
         suma = 0
         hay_almuerzo = False
@@ -295,18 +298,52 @@ VENDEDOR: MIGUEL
             # Aquí aparece el "placeholder" cuando no hay nada
             texto += "   Cant. Producto        $precio\n"
         else:
-            # Si hay productos, los lista
-            for item in self.factura_items:
+            # Si hay productos, los lista de forma inteligente
+            for idx, item in self.factura_items: # Nota: procesaremos con índices abajo
+                pass 
+            
+            # (Para no alterar la estructura del string 'texto' plano, usaremos un enfoque directo 
+            # que calcula la alineación por renglones):
+            for idx, item in enumerate(self.factura_items):
                 suma += item["precio"]
-                # Convertimos a minúsculas y validamos ambas opciones
                 if "almuerzo" in item["prod"].lower() or "bandeja" in item["prod"].lower():
                     hay_almuerzo = True
                 
-                linea_prod = f'{item["cant"]} {item["prod"].title()}'
-                if len(linea_prod) > 28: linea_prod = linea_prod[:28]
+                # Texto descriptivo del producto
+                desc_producto = f'{item["cant"]} {item["prod"].title()}'
+                precio_str = f"${item['precio']}"
                 
-                espacios = 39 - len(linea_prod) - len(str(item["precio"])) - 1
-                texto += f'{linea_prod}{" "*espacios}${item["precio"]}\n'
+                # Ancho máximo asignado al texto del producto antes del precio (ej. 28 caracteres)
+                ancho_max_texto = 28 
+                
+                # Descomponer el texto en múltiples líneas si supera el ancho máximo
+                palabras = desc_producto.split()
+                lineas_producto = []
+                linea_actual = ""
+                
+                for palabra in palabras:
+                    if len(linea_actual) + len(palabra) + (1 if linea_actual else 0) <= ancho_max_texto:
+                        linea_actual += (" " if linea_actual else "") + palabra
+                    else:
+                        lineas_producto.append(linea_actual)
+                        linea_actual = palabra
+                if linea_actual:
+                    lineas_producto.append(linea_actual)
+                
+                # Si por alguna razón una palabra sola es más larga que 28 caracteres
+                if not lineas_producto: lineas_producto = [desc_producto[:ancho_max_texto]]
+
+                # Construir el renglón. El precio se alinea con la ÚLTIMA línea del producto
+                for i, linea in enumerate(lineas_producto):
+                    if i == len(lineas_producto) - 1:
+                        # Última línea: rellenamos con espacios y pegamos el precio al final
+                        espacios = 39 - len(linea) - len(precio_str)
+                        if espacios < 1: espacios = 1
+                        texto += f"{linea}{' ' * espacios}{precio_str}\n"
+                    else:
+                        # Líneas intermedias: van solas sin precio a la derecha
+                        texto += f"{linea}\n"
+
 
             # --- Lógica automática de Domicilio ---
             # Si hay al menos un producto, y no hay almuerzo, se suma el domicilio
@@ -324,10 +361,53 @@ VENDEDOR: MIGUEL
 
         self.txt_factura.config(state="normal")
         self.txt_factura.delete("1.0", tk.END)
+        
+        # Insertamos el texto línea por línea para poder asignarle una etiqueta interactiva a cada producto
+        lineas = texto.split('\n')
+        linea_actual_idx = 1
+        
+        # Buscaremos mapear matemáticamente dónde quedaron los productos añadidos
+        idx_producto_actual = 0
+        conteo_productos = len(self.factura_items)
+        
+        # Re-calculamos las líneas exactas para aplicarles el tag 'item_X'
+        for item_idx, item in enumerate(self.factura_items):
+            desc_producto = f'{item["cant"]} {item["prod"].title()}'
+            palabras = desc_producto.split()
+            lineas_prod_cant = 0
+            l_act = ""
+            for p in palabras:
+                if len(l_act) + len(p) + (1 if l_act else 0) <= 28: l_act += (" " if l_act else "") + p
+                else: lineas_prod_cant += 1; l_act = p
+            if l_act: lineas_prod_cant += 1
+            
+            item["linea_inicio"] = None # Se calculará dinámicamente al escribir
+        
+        # Imprimimos de manera normal en el widget
         self.txt_factura.insert(tk.END, texto)
+        
+        # Aplicamos etiquetas dinámicas ("tags") a las líneas del widget Text que contienen los productos
+        # El encabezado ocupa exactamente 9 líneas en tu diseño actual
+        linea_puntero = 10 
+        for idx, item in enumerate(self.factura_items):
+            desc_producto = f'{item["cant"]} {item["prod"].title()}'
+            palabras = desc_producto.split()
+            cant_lineas = 0
+            l_act = ""
+            for p in palabras:
+                if len(l_act) + len(p) + (1 if l_act else 0) <= 28: l_act += (" " if l_act else "") + p
+                else: cant_lineas += 1; l_act = p
+            if l_act: cant_lineas += 1
+            
+            # Marcamos esas líneas con el identificador del producto
+            for l in range(cant_lineas):
+                self.txt_factura.tag_add(f"item_{idx}", f"{linea_puntero}.0", f"{linea_puntero}.end")
+                self.txt_factura.tag_config(f"item_{idx}", foreground="#2b2b2b", selectbackground="#d3d3d3")
+                linea_puntero += 1
+                
         self.txt_factura.config(state="disabled")
-
         return texto
+
 
     def finalizar_factura(self, event):
         cliente = self.entry_cliente.get().strip().title()
@@ -371,6 +451,45 @@ VENDEDOR: MIGUEL
         # AQUÍ ESTÁ LA ORDEN CLAVE:
         self.actualizar_vista_factura()
         self.entry_cant.focus_set()
+    
+    def interactuar_factura_click(self, event):
+        # Obtener la línea exacta donde el usuario hizo doble clic
+        posicion = self.txt_factura.index(f"@{event.x},{event.y}")
+        linea_clicada = int(posicion.split('.')[0])
+        
+        # Buscar a qué producto corresponde esa línea basándonos en los tags aplicados
+        for idx, item in enumerate(self.factura_items):
+            tags_en_linea = self.txt_factura.tag_names(f"{linea_clicada}.0")
+            if f"item_{idx}" in tags_en_linea:
+                # Extraemos el producto seleccionado
+                producto_seleccionado = self.factura_items[idx]
+                
+                # Confirmación rápida al usuario
+                respuesta = messagebox.askyesno(
+                    "Modificar Producto", 
+                    f"¿Deseas cargar '{producto_seleccionado['prod'].title()}' para corregirlo o eliminarlo?"
+                )
+                
+                if respuesta:
+                    # 1. Cargamos los datos en los inputs de la izquierda
+                    self.entry_cant.delete(0, tk.END)
+                    self.entry_cant.insert(0, str(producto_seleccionado["cant"]))
+                    
+                    self.entry_prod.delete(0, tk.END)
+                    self.entry_prod.insert(0, producto_seleccionado["prod"])
+                    
+                    self.entry_precio.delete(0, tk.END)
+                    self.entry_precio.insert(0, str(producto_seleccionado["precio"]))
+                    
+                    # 2. Lo eliminamos de la lista actual de la factura
+                    self.factura_items.pop(idx)
+                    
+                    # 3. Actualizamos la vista y mandamos el foco a la cantidad para su edición
+                    self.actualizar_vista_factura()
+                    self.entry_cant.focus_set()
+                    self.entry_cant.select_range(0, tk.END)
+                break
+
     
     def sincronizar_con_github(self):
         import urllib.request
