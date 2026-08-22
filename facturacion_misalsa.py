@@ -306,7 +306,7 @@ VENDEDOR: MIGUEL
             # que calcula la alineación por renglones):
             for idx, item in enumerate(self.factura_items):
                 suma += item["precio"]
-                if "almuerzo" in item["prod"].lower() or "bandeja" in item["prod"].lower():
+                if "almuerzo" in item["prod"].lower() or "bandeja" in item["prod"].lower() or "almuer" in item["prod"].lower() or "bande" in item["prod"].lower():
                     hay_almuerzo = True
                 
                 # Texto descriptivo del producto
@@ -491,14 +491,19 @@ VENDEDOR: MIGUEL
                 break
 
     
-    def sincronizar_con_github(self):
+        def sincronizar_con_github(self):
         import urllib.request
         import base64
         import json
 
         ruta_config = os.path.join(application_path, "config.json")
+        
+        # 1. Validación visual si falta el archivo de configuración
         if not os.path.exists(ruta_config):
-            print("Error: No se encontró el archivo config.json con el token de acceso.")
+            messagebox.showwarning(
+                "Error de Sincronización", 
+                "No se encontró el archivo 'config.json'.\n\nLos cambios se guardaron localmente, pero NO se respaldaron en GitHub."
+            )
             return
 
         try:
@@ -506,11 +511,18 @@ VENDEDOR: MIGUEL
                 config_data = json.load(f)
                 TOKEN = config_data.get("github_token")
         except Exception as e:
-            print(f"Error al leer config.json: {e}")
+            messagebox.showerror(
+                "Error de Configuración", 
+                f"No se pudo leer el archivo 'config.json'. Asegúrate de que tenga un formato JSON válido.\n\nDetalle: {e}"
+            )
             return
 
-        if not TOKEN or TOKEN == "github_pat_AQUÍ_PONES_TU_TOKEN_REAL":
-            print("Error: El token en config.json no es válido.")
+        # 2. Validación visual si el token es el de ejemplo o está vacío
+        if not TOKEN or TOKEN == "github_pat_AQUÍ_PONES_TU_TOKEN_REAL" or TOKEN.strip() == "":
+            messagebox.showwarning(
+                "Token Inválido", 
+                "El token de GitHub en 'config.json' no es válido o está vacío.\n\nPor favor, coloca tu 'github_pat' real."
+            )
             return
 
         USUARIO = "MAOAZAking"
@@ -531,22 +543,30 @@ VENDEDOR: MIGUEL
             if not os.path.exists(ruta_local):
                 continue
 
-            # Corrección aplicada a la URL de la API de GitHub
-            url = f"https://api.github.com/repos/{USUARIO}/{REPO}/contents/{nombre_github}"
+            url = f"https://github.com{USUARIO}/{REPO}/contents/{nombre_github}"
 
             try:
                 with open(ruta_local, "rb") as f:
                     contenido_base64 = base64.b64encode(f.read()).decode("utf-8")
 
+                # Intentar obtener el SHA si el archivo ya existe en GitHub
                 req_get = urllib.request.Request(url, headers=headers)
                 sha = None
                 try:
-                    with urllib.request.urlopen(req_get) as response:
+                    with urllib.request.urlopen(req_get, timeout=10) as response:
                         data_github = json.loads(response.read().decode("utf-8"))
                         sha = data_github.get("sha")
                 except urllib.error.HTTPError as e:
+                    # Si es 404 es normal (el archivo es nuevo en el repositorio)
                     if e.code != 404:
                         raise e
+                except urllib.error.URLError:
+                    # Este error ocurre habitualmente cuando NO hay internet
+                    messagebox.showerror(
+                        "Sin Internet", 
+                        f"No hay conexión a internet.\n\nNo se pudo respaldar '{nombre_github}' en GitHub, pero tus datos locales están seguros."
+                    )
+                    return # Cancelamos el bucle completo porque no hay red
 
                 payload = {
                     "message": "Actualización automática desde el sistema de facturación",
@@ -559,12 +579,34 @@ VENDEDOR: MIGUEL
                 data_json = json.dumps(payload).encode("utf-8")
                 req_put = urllib.request.Request(url, data=data_json, headers=headers, method="PUT")
                 
-                with urllib.request.urlopen(req_put) as response:
-                    if response.status in [200, 201]:
-                        print(f"Sincronizado con éxito: {nombre_github}")
+                with urllib.request.urlopen(req_put, timeout=10) as response:
+                    if response.status not in:
+                        messagebox.showwarning(
+                            "Falla en Servidor", 
+                            f"GitHub respondió con un código inesperado ({response.status}) al subir {nombre_github}."
+                        )
 
+            except urllib.error.HTTPError as e:
+                # Captura errores de credenciales (401), repositorio no encontrado (404/403), etc.
+                if e.code == 401:
+                    messagebox.showerror(
+                        "Error de Permisos", 
+                        "El token de GitHub ('github_pat') ha expirado o no tiene permisos de escritura en este repositorio."
+                    )
+                else:
+                    messagebox.showerror(
+                        "Error HTTP", 
+                        f"Error de comunicación con GitHub al subir {nombre_github}.\n\nCódigo de error: {e.code}"
+                    )
+                return # Detener para no generar múltiples alertas seguidas
+                
             except Exception as e:
-                print(f"Error sincronizando {nombre_github} con la API: {e}")
+                # Cualquier otra falla imprevista
+                messagebox.showerror(
+                    "Error de Sincronización", 
+                    f"Ocurrió un problema inesperado al subir {nombre_github}.\n\nDetalle: {e}"
+                )
+
 
 if __name__ == "__main__":
     root = tk.Tk()
