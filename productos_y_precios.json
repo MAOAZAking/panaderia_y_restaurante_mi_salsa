@@ -292,5 +292,8 @@
     },
     "cocacola 2.5l": {
         "precio": 10000
+    },
+    "desayuno ranchero sin cafe": {
+        "precio": 9000
     }
 }
