@@ -292,5 +292,8 @@
     },
     "porcion bistec": {
         "precio": 7000
+    },
+    "almuerzo sancocho, carne molida (sin principio)": {
+        "precio": 16000
     }
 }
