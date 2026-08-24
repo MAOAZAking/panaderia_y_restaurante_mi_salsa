@@ -281,10 +281,16 @@
     "desayuno completo ranchero, cafe con leche": {
         "precio": 11500
     },
+    "jugo hit naranja 1l": {
+        "precio": 6000
+    },
     "cafe en leche": {
         "precio": 2500
     },
-    "desayuno completo revuelto, cafe en leche, pan queso": {
-        "precio": 9200
+    "huevo ranchero con arroz": {
+        "precio": 8500
+    },
+    "cocacola 2.5l": {
+        "precio": 10000
     }
 }
