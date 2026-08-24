@@ -286,5 +286,8 @@
     },
     "cafe en leche": {
         "precio": 2500
+    },
+    "huevo ranchero con arroz": {
+        "precio": 8500
     }
 }
