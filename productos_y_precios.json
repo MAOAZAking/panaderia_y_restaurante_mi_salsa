@@ -298,5 +298,8 @@
     },
     "almuerzo completo sopa, blanquillos, chuleta pollo": {
         "precio": 16000
+    },
+    "bandeja chuleta de cerdo (sin arroz, en cambio papa o maduro), sin ensalada": {
+        "precio": 14000
     }
 }
