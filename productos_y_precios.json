@@ -295,5 +295,8 @@
     },
     "almuerzo sancocho, carne molida (sin principio)": {
         "precio": 16000
+    },
+    "almuerzo completo sopa, blanquillos, chuleta pollo": {
+        "precio": 16000
     }
 }
