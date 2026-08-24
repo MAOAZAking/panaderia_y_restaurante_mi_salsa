@@ -307,5 +307,11 @@
     },
     "almuerzo completo sopa de fideos, firjol, chuleta de pollo": {
         "precio": 16000
+    },
+    "bandeja carne molida y blanquillos": {
+        "precio": 14000
+    },
+    "almuerzo completo": {
+        "precio": 16000
     }
 }
