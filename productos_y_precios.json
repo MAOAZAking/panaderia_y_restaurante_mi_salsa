@@ -301,5 +301,11 @@
     },
     "bandeja chuleta de cerdo (sin arroz, en cambio papa o maduro), sin ensalada": {
         "precio": 14000
+    },
+    "bandeja chuleta de cerdo, frijo (sin ensalada)": {
+        "precio": 14000
+    },
+    "almuerzo completo sopa de fideos, firjol, chuleta de pollo": {
+        "precio": 16000
     }
 }
