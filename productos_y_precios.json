@@ -317,10 +317,13 @@
     "pepsi 1.75l": {
         "precio": 6000
     },
-    "reina mani": {
-        "precio": 2500
-    },
-    "cocacola 2.5l": {
+    "pepsi 3.125l": {
         "precio": 10000
+    },
+    "roscon arequipe": {
+        "precio": 2000
+    },
+    "roscon guayaba": {
+        "precio": 2000
     }
 }
