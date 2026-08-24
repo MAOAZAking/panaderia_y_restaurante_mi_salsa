@@ -283,5 +283,8 @@
     },
     "cafe en leche": {
         "precio": 2500
+    },
+    "desayuno completo revuelto, cafe en leche, pan queso": {
+        "precio": 9200
     }
 }
