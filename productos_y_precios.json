@@ -283,5 +283,8 @@
     },
     "jugo hit naranja 1l": {
         "precio": 6000
+    },
+    "cafe en leche": {
+        "precio": 2500
     }
 }
