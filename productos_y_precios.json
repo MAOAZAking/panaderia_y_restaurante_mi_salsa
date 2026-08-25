@@ -352,5 +352,11 @@
     },
     "porcion de alberja": {
         "precio": 6000
+    },
+    "bandeja con frijo, res asada": {
+        "precio": 14000
+    },
+    "almuerzo completo sopa, frijoles, pollo con verduras": {
+        "precio": 16000
     }
 }
