@@ -331,5 +331,8 @@
     },
     "tolima": {
         "precio": 500
+    },
+    "jugo valle personal": {
+        "precio": 2500
     }
 }
