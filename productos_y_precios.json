@@ -328,5 +328,8 @@
     },
     "carne en bistec, cafe en leche": {
         "precio": 13000
+    },
+    "tolima": {
+        "precio": 500
     }
 }
