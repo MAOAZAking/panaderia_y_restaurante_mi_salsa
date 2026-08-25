@@ -343,5 +343,8 @@
     },
     "almuerzo completo, sopa, filete de cerdo y frijoles": {
         "precio": 16000
+    },
+    "caldo costilla": {
+        "precio": 7000
     }
 }
