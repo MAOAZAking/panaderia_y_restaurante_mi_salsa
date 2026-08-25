@@ -338,25 +338,10 @@
     "huevo perico, arroz, pan": {
         "precio": 8500
     },
-    "torta 3 leches 1 libra": {
-        "precio": 55000
+    "fruti\u00f1o limonada": {
+        "precio": 1200
     },
-    "almuerzo completo, sopa, filete de cerdo y frijoles": {
-        "precio": 16000
-    },
-    "caldo costilla": {
-        "precio": 7000
-    },
-    "colombiana 3.125l": {
-        "precio": 10000
-    },
-    "porcion de alberja": {
-        "precio": 6000
-    },
-    "bandeja con frijo, res asada": {
-        "precio": 14000
-    },
-    "almuerzo completo sopa, frijoles, pollo con verduras": {
+    "almuerzo completo sopa, alverja, pollo desmechado con verduras": {
         "precio": 16000
     }
 }
