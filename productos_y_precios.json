@@ -338,7 +338,10 @@
     "huevo perico, arroz, pan": {
         "precio": 8500
     },
-    "fruti\u00f1o limonada": {
-        "precio": 1200
+    "torta 3 leches 1 libra": {
+        "precio": 55000
+    },
+    "almuerzo completo, sopa, filete de cerdo y frijoles": {
+        "precio": 16000
     }
 }
