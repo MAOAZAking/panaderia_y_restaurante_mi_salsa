@@ -361,5 +361,8 @@
     },
     "huevo perico, con arroz y pancito": {
         "precio": 8000
+    },
+    "almuerzo completo sopa, lentejas, res asada": {
+        "precio": 16000
     }
 }
