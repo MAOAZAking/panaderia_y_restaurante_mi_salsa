@@ -367,5 +367,8 @@
     },
     "almuerzo completo sopa y arroz con pollo": {
         "precio": 16000
+    },
+    "bandeja frijol y chuleta cerdo": {
+        "precio": 14000
     }
 }
