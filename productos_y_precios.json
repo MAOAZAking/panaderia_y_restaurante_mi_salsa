@@ -395,7 +395,16 @@
     "porcion frijol": {
         "precio": 6000
     },
-    "colombiana 3l": {
-        "precio": 8000
+    "cocacola 2.5l": {
+        "precio": 10000
+    },
+    "cocacola 2.25l": {
+        "precio": 10000
+    },
+    "mil hojas": {
+        "precio": 5500
+    },
+    "chocorramo": {
+        "precio": 3500
     }
 }
