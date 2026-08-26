@@ -349,5 +349,11 @@
     },
     "dedito": {
         "precio": 1000
+    },
+    "huevo revuelto, pan, cafe en leche (sin arroz)": {
+        "precio": 7500
+    },
+    "huevo revuelto, arroz, pan": {
+        "precio": 7000
     }
 }
