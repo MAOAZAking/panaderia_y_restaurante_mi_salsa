@@ -382,5 +382,11 @@
     },
     "almuerzo completo sopa lenteja y chuleta de cerdo": {
         "precio": 16000
+    },
+    "almuerzo completo sopa, lenteja, chuleta cerdo": {
+        "precio": 16000
+    },
+    "almuerzo completo sopa, lenteja, res asada": {
+        "precio": 16000
     }
 }
