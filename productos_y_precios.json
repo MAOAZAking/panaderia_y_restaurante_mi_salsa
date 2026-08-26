@@ -373,5 +373,8 @@
     },
     "bandeja frijol y filete de pollo": {
         "precio": 14000
+    },
+    "almuerzo completo sopa con arroz con pollo": {
+        "precio": 16000
     }
 }
