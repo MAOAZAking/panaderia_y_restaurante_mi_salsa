@@ -358,5 +358,8 @@
     },
     "almuerzo completo, con arroz con pollo": {
         "precio": 16000
+    },
+    "huevo perico, con arroz y pancito": {
+        "precio": 8000
     }
 }
