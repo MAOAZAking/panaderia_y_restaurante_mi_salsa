@@ -376,5 +376,11 @@
     },
     "almuerzo completo sopa con arroz con pollo": {
         "precio": 16000
+    },
+    "almuerzo completo sopa, lenteja y filete cerdo": {
+        "precio": 16000
+    },
+    "almuerzo completo sopa lenteja y chuleta de cerdo": {
+        "precio": 16000
     }
 }
