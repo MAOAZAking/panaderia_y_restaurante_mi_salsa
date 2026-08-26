@@ -364,5 +364,8 @@
     },
     "almuerzo completo sopa, lentejas, res asada": {
         "precio": 16000
+    },
+    "almuerzo completo sopa y arroz con pollo": {
+        "precio": 16000
     }
 }
