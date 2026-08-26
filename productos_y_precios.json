@@ -355,5 +355,8 @@
     },
     "huevo revuelto, arroz, pan": {
         "precio": 7000
+    },
+    "almuerzo completo, con arroz con pollo": {
+        "precio": 16000
     }
 }
