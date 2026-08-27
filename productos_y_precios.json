@@ -415,5 +415,8 @@
     },
     "porcion huevo revuelto": {
         "precio": 4500
+    },
+    "pan salchicha": {
+        "precio": 1700
     }
 }
