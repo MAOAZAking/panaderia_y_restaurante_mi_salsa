@@ -433,5 +433,11 @@
     },
     "jugo hit naranja 1l": {
         "precio": 6000
+    },
+    "brazo de reina": {
+        "precio": 2500
+    },
+    "porcion de torta chocolate": {
+        "precio": 2500
     }
 }
