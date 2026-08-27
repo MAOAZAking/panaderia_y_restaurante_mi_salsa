@@ -427,5 +427,8 @@
     },
     "porcion huevo perico, pan": {
         "precio": 6000
+    },
+    "jugo del valle personal": {
+        "precio": 2500
     }
 }
