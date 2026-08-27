@@ -1,413 +1,419 @@
-{
-    "pan cacho": {
-        "precio": 1700
-    },
-    "pan agridulce": {
-        "precio": 700,
-        "promocion": {
-            "cantidad": 3,
-            "precio_promo": 2000
-        }
-    },
-    "pan queso": {
-        "precio": 700,
-        "promocion": {
-            "cantidad": 3,
-            "precio_promo": 2000
-        }
-    },
-    "borracho": {
-        "precio": 700,
-        "promocion": {
-            "cantidad": 3,
-            "precio_promo": 2000
-        }
-    },
-    "desayuno huvos revueltos + arroz": {
-        "precio": 6000
-    },
-    "desayuno huevos pericos + arroz": {
-        "precio": 6500
-    },
-    "pan 2000": {
-        "precio": 2000
-    },
-    "bu\u00f1uelos": {
-        "precio": 1000
-    },
-    "desayuno completo ranchero": {
-        "precio": 10000
-    },
-    "promo pan queso": {
-        "precio": 2000
-    },
-    "porcion huevo ranchero": {
-        "precio": 5500
-    },
-    "agua saborizada manzana": {
-        "precio": 2500
-    },
-    "agua saborizada limon": {
-        "precio": 2500
-    },
-    "gaseosa quatro 1.5l": {
-        "precio": 8000
-    },
-    "papa aborrajada": {
-        "precio": 1500
-    },
-    "salchichon": {
-        "precio": 1500
-    },
-    "papa con salchichon": {
-        "precio": 3000
-    },
-    "pan 3000": {
-        "precio": 3000
-    },
-    "pan 5000": {
-        "precio": 5000
-    },
-    "chicharron panaderia": {
-        "precio": 2500
-    },
-    "pan dulce guayaba": {
-        "precio": 600
-    },
-    "pan dulce arequipe": {
-        "precio": 600
-    },
-    "roscon": {
-        "precio": 2000
-    },
-    "pan coco": {
-        "precio": 600
-    },
-    "dedo": {
-        "precio": 1000
-    },
-    "empanada": {
-        "precio": 1500
-    },
-    "pan hawaiano": {
-        "precio": 2500
-    },
-    "pandebono": {
-        "precio": 1000
-    },
-    "bu\u00f1uelo": {
-        "precio": 1000
-    },
-    "arepita": {
-        "precio": 1000
-    },
-    "arepita panaderia": {
-        "precio": 1000
-    },
-    "arepita horno": {
-        "precio": 1000
-    },
-    "pan 1000": {
-        "precio": 1000
-    },
-    "almuerzo sancocho de pescado + pescado frito (sin arroz, pero con mas ensalada)": {
-        "precio": 16000
-    },
-    "galleta de pepitas": {
-        "precio": 1000
-    },
-    "achira": {
-        "precio": 500
-    },
-    "almuerzo albondiga, frijoles, res asada": {
-        "precio": 16000
-    },
-    "croissant": {
-        "precio": 1700
-    },
-    "agua saborizada h2o limon": {
-        "precio": 3500
-    },
-    "leche mediana": {
-        "precio": 3200
-    },
-    "leche grande": {
-        "precio": 6500
-    },
-    "deditos": {
-        "precio": 1000
-    },
-    "carne en bistec": {
-        "precio": 13000
-    },
-    "glacear gran cola": {
-        "precio": 2500
-    },
-    "agua natural personal": {
-        "precio": 1000
-    },
-    "agua con gas personal": {
-        "precio": 3000
-    },
-    "glacear manzana": {
-        "precio": 2500
-    },
-    "papa rellena": {
-        "precio": 5000
-    },
-    "libra azucar": {
-        "precio": 3000
-    },
-    "gracial gran cola 1.7l": {
-        "precio": 6000
-    },
-    "speed max": {
-        "precio": 3000
-    },
-    "dona chocolate": {
-        "precio": 3500
-    },
-    "almojabana": {
-        "precio": 1000
-    },
-    "cocacola 1.5l": {
-        "precio": 8000
-    },
-    "paquete de vasos": {
-        "precio": 4000
-    },
-    "torta fria de media libra": {
-        "precio": 35000
-    },
-    "vasos plastico": {
-        "precio": 100
-    },
-    "cucharas clasticas": {
-        "precio": 100
-    },
-    "cocacola 3l": {
-        "precio": 13000
-    },
-    "gelatina amarilla": {
-        "precio": 2000
-    },
-    "gatorade": {
-        "precio": 5000
-    },
-    "yogurt melocoton": {
-        "precio": 3000
-    },
-    "jugo hit": {
-        "precio": 3500
-    },
-    "pepsi 2.5l": {
-        "precio": 8000
-    },
-    "cocacola personal": {
-        "precio": 3500
-    },
-    "papel higienico": {
-        "precio": 2000
-    },
-    "pan abuela": {
-        "precio": 5000
-    },
-    "jugo hit naranja-pi\u00f1a": {
-        "precio": 3500
-    },
-    "galleta de chocolate": {
-        "precio": 1000
-    },
-    "reina": {
-        "precio": 2500
-    },
-    "reina roja": {
-        "precio": 2500
-    },
-    "reina coco": {
-        "precio": 2500
-    },
-    "dona azucar": {
-        "precio": 3000
-    },
-    "dona azucar redonda": {
-        "precio": 3000
-    },
-    "porcion torta chocolate": {
-        "precio": 2500
-    },
-    "porcion torta chisipitas de colores": {
-        "precio": 2500
-    },
-    "porcion torta mantecada": {
-        "precio": 2500
-    },
-    "porcion torta vainilla": {
-        "precio": 2500
-    },
-    "porcion torta banano": {
-        "precio": 2500
-    },
-    "pan ca\u00f1a": {
-        "precio": 2000
-    },
-    "agua natural mini": {
-        "precio": 1000
-    },
-    "jugo hit mango": {
-        "precio": 3500
-    },
-    "jugo hit mora": {
-        "precio": 3500
-    },
-    "colombiana personal": {
-        "precio": 3500
-    },
-    "glacear cola negra": {
-        "precio": 2500
-    },
-    "glacear cola roja": {
-        "precio": 2500
-    },
-    "soda glacial personal": {
-        "precio": 2500
-    },
-    "glacear uva personal": {
-        "precio": 2500
-    },
-    "desayuno completo cacerola, cafe en leche": {
-        "precio": 9000
-    },
-    "desayuno completo ranchero, cafe con leche": {
-        "precio": 11500
-    },
-    "cafe en leche": {
-        "precio": 2500
-    },
-    "desayuno completo revuelto, cafe en leche, pan queso": {
-        "precio": 9200
-    },
-    "huevo ranchero, arroz": {
-        "precio": 8500
-    },
-    "porcion bistec": {
-        "precio": 7000
-    },
-    "almuerzo sancocho, carne molida (sin principio)": {
-        "precio": 16000
-    },
-    "almuerzo completo sopa, blanquillos, chuleta pollo": {
-        "precio": 16000
-    },
-    "bandeja chuleta de cerdo (sin arroz, en cambio papa o maduro), sin ensalada": {
-        "precio": 14000
-    },
-    "bandeja chuleta de cerdo, frijo (sin ensalada)": {
-        "precio": 14000
-    },
-    "almuerzo completo sopa de fideos, firjol, chuleta de pollo": {
-        "precio": 16000
-    },
-    "bandeja carne molida y blanquillos": {
-        "precio": 14000
-    },
-    "almuerzo completo": {
-        "precio": 16000
-    },
-    "pepsi 1.75l": {
-        "precio": 6000
-    },
-    "pepsi 3.125l": {
-        "precio": 10000
-    },
-    "roscon arequipe": {
-        "precio": 2000
-    },
-    "roscon guayaba": {
-        "precio": 2000
-    },
-    "carne en bistec, cafe en leche": {
-        "precio": 13000
-    },
-    "tolima": {
-        "precio": 500
-    },
-    "jugo valle personal": {
-        "precio": 2500
-    },
-    "huevo perico, arroz, pan": {
-        "precio": 8500
-    },
-    "fruti\u00f1o limonada": {
-        "precio": 1200
-    },
-    "almuerzo completo sopa, alverja, pollo desmechado con verduras": {
-        "precio": 16000
-    },
-    "cafe negro": {
-        "precio": 2000
-    },
-    "dedito": {
-        "precio": 1000
-    },
-    "huevo revuelto, pan, cafe en leche (sin arroz)": {
-        "precio": 7500
-    },
-    "huevo revuelto, arroz, pan": {
-        "precio": 7000
-    },
-    "almuerzo completo, con arroz con pollo": {
-        "precio": 16000
-    },
-    "huevo perico, con arroz y pancito": {
-        "precio": 8000
-    },
-    "almuerzo completo sopa, lentejas, res asada": {
-        "precio": 16000
-    },
-    "almuerzo completo sopa y arroz con pollo": {
-        "precio": 16000
-    },
-    "bandeja frijol y chuleta cerdo": {
-        "precio": 14000
-    },
-    "bandeja frijol y filete de pollo": {
-        "precio": 14000
-    },
-    "almuerzo completo sopa con arroz con pollo": {
-        "precio": 16000
-    },
-    "almuerzo completo sopa, lenteja y filete cerdo": {
-        "precio": 16000
-    },
-    "almuerzo completo sopa lenteja y chuleta de cerdo": {
-        "precio": 16000
-    },
-    "almuerzo completo sopa, lenteja, chuleta cerdo": {
-        "precio": 16000
-    },
-    "almuerzo completo sopa, lenteja, res asada": {
-        "precio": 16000
-    },
-    "almuerzo completo sopa, firjol, res asada": {
-        "precio": 16000
-    },
-    "porcion frijol": {
-        "precio": 6000
-    },
-    "cocacola 2.5l": {
-        "precio": 10000
-    },
-    "cocacola 2.25l": {
-        "precio": 10000
-    },
-    "mil hojas": {
-        "precio": 5500
-    },
-    "chocorramo": {
-        "precio": 3500
-    },
-    "colombiana 3l": {
-        "precio": 10000
-    }
+{
+    "pan cacho": {
+        "precio": 1700
+    },
+    "pan agridulce": {
+        "precio": 700,
+        "promocion": {
+            "cantidad": 3,
+            "precio_promo": 2000
+        }
+    },
+    "pan queso": {
+        "precio": 700,
+        "promocion": {
+            "cantidad": 3,
+            "precio_promo": 2000
+        }
+    },
+    "borracho": {
+        "precio": 700,
+        "promocion": {
+            "cantidad": 3,
+            "precio_promo": 2000
+        }
+    },
+    "desayuno huvos revueltos + arroz": {
+        "precio": 6000
+    },
+    "desayuno huevos pericos + arroz": {
+        "precio": 6500
+    },
+    "pan 2000": {
+        "precio": 2000
+    },
+    "bu\u00f1uelos": {
+        "precio": 1000
+    },
+    "desayuno completo ranchero": {
+        "precio": 10000
+    },
+    "promo pan queso": {
+        "precio": 2000
+    },
+    "porcion huevo ranchero": {
+        "precio": 5500
+    },
+    "agua saborizada manzana": {
+        "precio": 2500
+    },
+    "agua saborizada limon": {
+        "precio": 2500
+    },
+    "gaseosa quatro 1.5l": {
+        "precio": 8000
+    },
+    "papa aborrajada": {
+        "precio": 1500
+    },
+    "salchichon": {
+        "precio": 1500
+    },
+    "papa con salchichon": {
+        "precio": 3000
+    },
+    "pan 3000": {
+        "precio": 3000
+    },
+    "pan 5000": {
+        "precio": 5000
+    },
+    "chicharron panaderia": {
+        "precio": 2500
+    },
+    "pan dulce guayaba": {
+        "precio": 600
+    },
+    "pan dulce arequipe": {
+        "precio": 600
+    },
+    "roscon": {
+        "precio": 2000
+    },
+    "pan coco": {
+        "precio": 600
+    },
+    "dedo": {
+        "precio": 1000
+    },
+    "empanada": {
+        "precio": 1500
+    },
+    "pan hawaiano": {
+        "precio": 2500
+    },
+    "pandebono": {
+        "precio": 1000
+    },
+    "bu\u00f1uelo": {
+        "precio": 1000
+    },
+    "arepita": {
+        "precio": 1000
+    },
+    "arepita panaderia": {
+        "precio": 1000
+    },
+    "arepita horno": {
+        "precio": 1000
+    },
+    "pan 1000": {
+        "precio": 1000
+    },
+    "almuerzo sancocho de pescado + pescado frito (sin arroz, pero con mas ensalada)": {
+        "precio": 16000
+    },
+    "galleta de pepitas": {
+        "precio": 1000
+    },
+    "achira": {
+        "precio": 500
+    },
+    "almuerzo albondiga, frijoles, res asada": {
+        "precio": 16000
+    },
+    "croissant": {
+        "precio": 1700
+    },
+    "agua saborizada h2o limon": {
+        "precio": 3500
+    },
+    "leche mediana": {
+        "precio": 3200
+    },
+    "leche grande": {
+        "precio": 6500
+    },
+    "deditos": {
+        "precio": 1000
+    },
+    "carne en bistec": {
+        "precio": 13000
+    },
+    "glacear gran cola": {
+        "precio": 2500
+    },
+    "agua natural personal": {
+        "precio": 1000
+    },
+    "agua con gas personal": {
+        "precio": 3000
+    },
+    "glacear manzana": {
+        "precio": 2500
+    },
+    "papa rellena": {
+        "precio": 5000
+    },
+    "libra azucar": {
+        "precio": 3000
+    },
+    "gracial gran cola 1.7l": {
+        "precio": 6000
+    },
+    "speed max": {
+        "precio": 3000
+    },
+    "dona chocolate": {
+        "precio": 3500
+    },
+    "almojabana": {
+        "precio": 1000
+    },
+    "cocacola 1.5l": {
+        "precio": 8000
+    },
+    "paquete de vasos": {
+        "precio": 4000
+    },
+    "torta fria de media libra": {
+        "precio": 35000
+    },
+    "vasos plastico": {
+        "precio": 100
+    },
+    "cucharas clasticas": {
+        "precio": 100
+    },
+    "cocacola 3l": {
+        "precio": 13000
+    },
+    "gelatina amarilla": {
+        "precio": 2000
+    },
+    "gatorade": {
+        "precio": 5000
+    },
+    "yogurt melocoton": {
+        "precio": 3000
+    },
+    "jugo hit": {
+        "precio": 3500
+    },
+    "pepsi 2.5l": {
+        "precio": 8000
+    },
+    "cocacola personal": {
+        "precio": 3500
+    },
+    "papel higienico": {
+        "precio": 2000
+    },
+    "pan abuela": {
+        "precio": 5000
+    },
+    "jugo hit naranja-pi\u00f1a": {
+        "precio": 3500
+    },
+    "galleta de chocolate": {
+        "precio": 1000
+    },
+    "reina": {
+        "precio": 2500
+    },
+    "reina roja": {
+        "precio": 2500
+    },
+    "reina coco": {
+        "precio": 2500
+    },
+    "dona azucar": {
+        "precio": 3000
+    },
+    "dona azucar redonda": {
+        "precio": 3000
+    },
+    "porcion torta chocolate": {
+        "precio": 2500
+    },
+    "porcion torta chisipitas de colores": {
+        "precio": 2500
+    },
+    "porcion torta mantecada": {
+        "precio": 2500
+    },
+    "porcion torta vainilla": {
+        "precio": 2500
+    },
+    "porcion torta banano": {
+        "precio": 2500
+    },
+    "pan ca\u00f1a": {
+        "precio": 2000
+    },
+    "agua natural mini": {
+        "precio": 1000
+    },
+    "jugo hit mango": {
+        "precio": 3500
+    },
+    "jugo hit mora": {
+        "precio": 3500
+    },
+    "colombiana personal": {
+        "precio": 3500
+    },
+    "glacear cola negra": {
+        "precio": 2500
+    },
+    "glacear cola roja": {
+        "precio": 2500
+    },
+    "soda glacial personal": {
+        "precio": 2500
+    },
+    "glacear uva personal": {
+        "precio": 2500
+    },
+    "desayuno completo cacerola, cafe en leche": {
+        "precio": 9000
+    },
+    "desayuno completo ranchero, cafe con leche": {
+        "precio": 11500
+    },
+    "cafe en leche": {
+        "precio": 2500
+    },
+    "desayuno completo revuelto, cafe en leche, pan queso": {
+        "precio": 9200
+    },
+    "huevo ranchero, arroz": {
+        "precio": 8500
+    },
+    "porcion bistec": {
+        "precio": 7000
+    },
+    "almuerzo sancocho, carne molida (sin principio)": {
+        "precio": 16000
+    },
+    "almuerzo completo sopa, blanquillos, chuleta pollo": {
+        "precio": 16000
+    },
+    "bandeja chuleta de cerdo (sin arroz, en cambio papa o maduro), sin ensalada": {
+        "precio": 14000
+    },
+    "bandeja chuleta de cerdo, frijo (sin ensalada)": {
+        "precio": 14000
+    },
+    "almuerzo completo sopa de fideos, firjol, chuleta de pollo": {
+        "precio": 16000
+    },
+    "bandeja carne molida y blanquillos": {
+        "precio": 14000
+    },
+    "almuerzo completo": {
+        "precio": 16000
+    },
+    "pepsi 1.75l": {
+        "precio": 6000
+    },
+    "pepsi 3.125l": {
+        "precio": 10000
+    },
+    "roscon arequipe": {
+        "precio": 2000
+    },
+    "roscon guayaba": {
+        "precio": 2000
+    },
+    "carne en bistec, cafe en leche": {
+        "precio": 13000
+    },
+    "tolima": {
+        "precio": 500
+    },
+    "jugo valle personal": {
+        "precio": 2500
+    },
+    "huevo perico, arroz, pan": {
+        "precio": 8500
+    },
+    "fruti\u00f1o limonada": {
+        "precio": 1200
+    },
+    "almuerzo completo sopa, alverja, pollo desmechado con verduras": {
+        "precio": 16000
+    },
+    "cafe negro": {
+        "precio": 2000
+    },
+    "dedito": {
+        "precio": 1000
+    },
+    "huevo revuelto, pan, cafe en leche (sin arroz)": {
+        "precio": 7500
+    },
+    "huevo revuelto, arroz, pan": {
+        "precio": 7000
+    },
+    "almuerzo completo, con arroz con pollo": {
+        "precio": 16000
+    },
+    "huevo perico, con arroz y pancito": {
+        "precio": 8000
+    },
+    "almuerzo completo sopa, lentejas, res asada": {
+        "precio": 16000
+    },
+    "almuerzo completo sopa y arroz con pollo": {
+        "precio": 16000
+    },
+    "bandeja frijol y chuleta cerdo": {
+        "precio": 14000
+    },
+    "bandeja frijol y filete de pollo": {
+        "precio": 14000
+    },
+    "almuerzo completo sopa con arroz con pollo": {
+        "precio": 16000
+    },
+    "almuerzo completo sopa, lenteja y filete cerdo": {
+        "precio": 16000
+    },
+    "almuerzo completo sopa lenteja y chuleta de cerdo": {
+        "precio": 16000
+    },
+    "almuerzo completo sopa, lenteja, chuleta cerdo": {
+        "precio": 16000
+    },
+    "almuerzo completo sopa, lenteja, res asada": {
+        "precio": 16000
+    },
+    "almuerzo completo sopa, firjol, res asada": {
+        "precio": 16000
+    },
+    "porcion frijol": {
+        "precio": 6000
+    },
+    "cocacola 2.5l": {
+        "precio": 10000
+    },
+    "cocacola 2.25l": {
+        "precio": 10000
+    },
+    "mil hojas": {
+        "precio": 5500
+    },
+    "chocorramo": {
+        "precio": 3500
+    },
+    "colombiana 3l": {
+        "precio": 10000
+    },
+    "jugo hit lulo": {
+        "precio": 3500
+    },
+    "porcion huevo revuelto": {
+        "precio": 4500
+    }
 }
