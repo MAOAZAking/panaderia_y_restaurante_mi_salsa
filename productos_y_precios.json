@@ -422,28 +422,7 @@
     "perico cebolla cabezona, poco arroz, cafe en leche": {
         "precio": 10000
     },
-    "porcion huevo perico": {
-        "precio": 5500
-    },
-    "porcion huevo perico, pan": {
-        "precio": 6000
-    },
-    "jugo del valle personal": {
-        "precio": 2500
-    },
-    "jugo hit naranja 1l": {
-        "precio": 6000
-    },
-    "brazo de reina": {
-        "precio": 2500
-    },
-    "porcion de torta chocolate": {
-        "precio": 2500
-    },
-    "desayuno competo ranchero, cafe en leche": {
-        "precio": 11500
-    },
-    "desayuno completo ranchero, cafe negro": {
-        "precio": 11000
+    "desayuno completo revuelto": {
+        "precio": 7000
     }
 }
