@@ -439,5 +439,11 @@
     },
     "porcion de torta chocolate": {
         "precio": 2500
+    },
+    "desayuno competo ranchero, cafe en leche": {
+        "precio": 11500
+    },
+    "desayuno completo ranchero, cafe negro": {
+        "precio": 11000
     }
 }
