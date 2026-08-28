@@ -457,5 +457,8 @@
     },
     "porcion caldo de costilla": {
         "precio": 6000
+    },
+    "yigurt melocoton baso": {
+        "precio": 3000
     }
 }
