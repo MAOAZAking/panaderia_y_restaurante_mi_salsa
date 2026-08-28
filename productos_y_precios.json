@@ -472,5 +472,8 @@
     },
     "almuerzo completo frijolada, chicharon": {
         "precio": 16000
+    },
+    "porcion de arroz": {
+        "precio": 2500
     }
 }
