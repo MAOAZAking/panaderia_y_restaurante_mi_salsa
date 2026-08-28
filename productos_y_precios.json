@@ -469,5 +469,8 @@
     },
     "almuerzo completo frijolada, chorizo": {
         "precio": 16000
+    },
+    "almuerzo completo frijolada, chicharon": {
+        "precio": 16000
     }
 }
