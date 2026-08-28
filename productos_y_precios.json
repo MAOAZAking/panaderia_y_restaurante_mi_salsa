@@ -475,5 +475,8 @@
     },
     "porcion de arroz": {
         "precio": 2500
+    },
+    "almuerzo completo consome, frijol, chuleta de pollo": {
+        "precio": 16000
     }
 }
