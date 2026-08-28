@@ -463,5 +463,8 @@
     },
     "porciones pastel chocolate": {
         "precio": 2500
+    },
+    "nectar pera 1l": {
+        "precio": 7000
     }
 }
