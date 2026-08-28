@@ -478,5 +478,8 @@
     },
     "almuerzo completo consome, frijol, chuleta de pollo": {
         "precio": 16000
+    },
+    "bandeja frijol, chorizo": {
+        "precio": 14000
     }
 }
