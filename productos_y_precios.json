@@ -460,5 +460,8 @@
     },
     "yigurt melocoton baso": {
         "precio": 3000
+    },
+    "porciones pastel chocolate": {
+        "precio": 2500
     }
 }
