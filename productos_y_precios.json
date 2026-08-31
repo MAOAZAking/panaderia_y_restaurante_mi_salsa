@@ -484,5 +484,8 @@
     },
     "huevo ranchero, arroz, pan": {
         "precio": 9000
+    },
+    "pan 500": {
+        "precio": 500
     }
 }
