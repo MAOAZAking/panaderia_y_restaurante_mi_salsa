@@ -490,5 +490,14 @@
     },
     "glacear cola negra 1l": {
         "precio": 4000
+    },
+    "jugo hit tropical personal": {
+        "precio": 3500
+    },
+    "desayuno perico, 2 panes": {
+        "precio": 8500
+    },
+    "desayuno revuelto, croassant": {
+        "precio": 7700
     }
 }
