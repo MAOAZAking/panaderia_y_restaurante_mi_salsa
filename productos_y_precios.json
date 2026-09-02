@@ -499,5 +499,11 @@
     },
     "desayuno revuelto, croassant": {
         "precio": 7700
+    },
+    "desayuno revuelto": {
+        "precio": 6000
+    },
+    "desayuno revuelto completo": {
+        "precio": 12900
     }
 }
