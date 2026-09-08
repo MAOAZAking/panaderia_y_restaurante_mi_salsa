@@ -6,6 +6,7 @@ import sys
 from datetime import datetime
 import urllib.request
 import base64
+import re
 
 # ==========================================
 # CONFIGURACIÓN DE RUTAS Y ARCHIVOS JSON
@@ -47,7 +48,6 @@ def descargar_archivos_github():
         "clientes.json": CLI_JSON
     }
 
-    # Uso de Bearer para compatibilidad total con Fine-grained tokens
     headers = {
         "Authorization": f"Bearer {TOKEN}",
         "Accept": "application/vnd.github.v3+json",
@@ -69,7 +69,7 @@ def descargar_archivos_github():
             errores.append(f"No se pudo descargar {nombre_github}: {str(e)}")
     
     if errores:
-        mensaje = "No se pudieron descargar los archivos de GitHub.\nSe usarán los datos locales.\n\nDetalles:\n" + "\n".join(errores) + "\n\n(Nota: Si es Error 403, revisa en GitHub que tu Token tenga permisos sobre 'Only select repositories' eligiendo este repositorio exacto)."
+        mensaje = "No se pudieron descargar los archivos de GitHub.\nSe usarán los datos locales.\n\nDetalles:\n" + "\n".join(errores)
         messagebox.showwarning("Aviso de Sincronización", mensaje)
 
 def crear_archivos_base_si_no_existen():
@@ -94,16 +94,15 @@ class AppFacturacion:
     def __init__(self, root):
         self.root = root
         self.root.title("Facturación - Panadería y Restaurante Mi Salsa")
-        self.root.geometry("850x600")
+        self.root.geometry("900x700")
         self.root.configure(bg="#f4f4f4")
         
         self.productos_db = self.cargar_json(PROD_JSON)
         self.clientes_db = self.cargar_json(CLI_JSON)
         
         self.factura_items = []
-        self.total_factura = 0
         self.domicilio_eliminado = False
-        self.linea_a_item_idx = {} # Mapeo exacto para clics en líneas
+        self.linea_a_item_idx = {} 
 
         self.construir_interfaz()
         self.actualizar_vista_factura()
@@ -125,14 +124,14 @@ class AppFacturacion:
         frame_der = tk.Frame(self.root, bg="white", padx=10, pady=10, relief="sunken", borderwidth=2)
         frame_der.pack(side="right", fill="both", expand=True, padx=20, pady=20)
 
-        tk.Label(frame_izq, text="SISTEMA DE FACTURACIÓN", font=("Arial", 14, "bold"), bg="#f4f4f4").pack(pady=(0, 20))
+        tk.Label(frame_izq, text="SISTEMA DE FACTURACIÓN", font=("Arial", 14, "bold"), bg="#f4f4f4").pack(pady=(0, 10))
 
-        tk.Label(frame_izq, text="Cantidad (Enter si está vacío para finalizar):", bg="#f4f4f4").pack(anchor="w")
+        tk.Label(frame_izq, text="Cantidad (Enter si está vacío para cobrar):", bg="#f4f4f4").pack(anchor="w")
         self.entry_cant = tk.Entry(frame_izq, font=("Arial", 12))
         self.entry_cant.pack(fill="x", pady=5)
         self.entry_cant.bind("<Return>", self.on_cant_enter)
 
-        tk.Label(frame_izq, text="Producto:", bg="#f4f4f4").pack(anchor="w", pady=(10,0))
+        tk.Label(frame_izq, text="Producto:", bg="#f4f4f4").pack(anchor="w", pady=(5,0))
         self.entry_prod = tk.Entry(frame_izq, font=("Arial", 12))
         self.entry_prod.pack(fill="x", pady=5)
         
@@ -145,14 +144,14 @@ class AppFacturacion:
         self.listbox_prod.bind("<Return>", self.seleccionar_producto)
         self.entry_prod.bind("<Return>", self.on_prod_enter)
 
-        tk.Label(frame_izq, text="Precio Total (Corregir si es necesario):", bg="#f4f4f4").pack(anchor="w", pady=(10,0))
+        tk.Label(frame_izq, text="Precio Total (Corregir si es necesario):", bg="#f4f4f4").pack(anchor="w", pady=(5,0))
         self.entry_precio = tk.Entry(frame_izq, font=("Arial", 12))
         self.entry_precio.pack(fill="x", pady=5)
         self.entry_precio.bind("<Return>", self.agregar_producto_a_factura)
 
-        tk.Frame(frame_izq, height=2, bg="#ccc").pack(fill="x", pady=20)
+        tk.Frame(frame_izq, height=2, bg="#ccc").pack(fill="x", pady=10)
 
-        tk.Label(frame_izq, text="Forma de Pago (Efectivo/Nequi):", bg="#f4f4f4").pack(anchor="w", pady=(10,0))
+        tk.Label(frame_izq, text="Forma de Pago (Efectivo/Nequi):", bg="#f4f4f4").pack(anchor="w")
         self.entry_pago = tk.Entry(frame_izq, font=("Arial", 12))
         self.entry_pago.pack(fill="x", pady=5)
         self.entry_pago.bind("<KeyRelease>", self.toggle_pago)
@@ -160,7 +159,13 @@ class AppFacturacion:
         self.entry_pago.bind("<Down>", self.toggle_pago_flechas)
         self.entry_pago.bind("<Return>", self.validar_pago) 
 
-        tk.Label(frame_izq, text="Cliente:", bg="#f4f4f4").pack(anchor="w", pady=(10,0))
+        tk.Label(frame_izq, text="Dinero Recibido (Dejar vacío si es exacto o Nequi):", bg="#f4f4f4").pack(anchor="w", pady=(5,0))
+        self.entry_recibido = tk.Entry(frame_izq, font=("Arial", 12))
+        self.entry_recibido.pack(fill="x", pady=5)
+        self.entry_recibido.bind("<Return>", self.on_recibido_enter)
+        self.entry_recibido.bind("<KeyRelease>", lambda e: self.actualizar_vista_factura())
+
+        tk.Label(frame_izq, text="Cliente (Para NIT agregar la palabra 'nit'):", bg="#f4f4f4").pack(anchor="w", pady=(5,0))
         self.entry_cliente = tk.Entry(frame_izq, font=("Arial", 12))
         self.entry_cliente.pack(fill="x", pady=5)
         
@@ -175,7 +180,6 @@ class AppFacturacion:
 
         self.txt_factura = tk.Text(frame_der, font=("Courier", 10), state="disabled", bg="white", wrap="word")
         self.txt_factura.pack(fill="both", expand=True)
-        # Enlace general para doble clic gestionado de forma inteligente por líneas
         self.txt_factura.bind("<Double-Button-1>", self.interactuar_factura_click)
 
     # --- LÓGICA DE EVENTOS ---
@@ -261,16 +265,10 @@ class AppFacturacion:
             self.productos_db[prod] = {"precio": precio_unitario}
             self.guardar_json(PROD_JSON, self.productos_db)
             
-        # 1. Quitamos temporalmente el domicilio si ya estaba agregado
         self.factura_items = [item for item in self.factura_items if item["prod"] != "domicilio"]
-        
-        # 2. Agregamos el nuevo producto
         self.factura_items.append({"cant": cant, "prod": prod, "precio": precio_total})
         
-        # 3. Evaluamos si hay almuerzo o abreviaturas ("almuer", "amuer", "bande")
         hay_almuerzo = any(any(kw in item["prod"].lower() for kw in ["almuer", "amuer", "bande"]) for item in self.factura_items)
-                
-        # 4. Si no hay almuerzo y no fue eliminado a mano, agregamos el domicilio AL FINAL
         if not hay_almuerzo and not self.domicilio_eliminado and len(self.factura_items) > 0:
             self.factura_items.append({"cant": 1, "prod": "domicilio", "precio": 1000})
 
@@ -279,7 +277,6 @@ class AppFacturacion:
         self.entry_precio.delete(0, tk.END)
         self.actualizar_vista_factura()
         self.entry_cant.focus_set()
-        
         return "break"
 
     def toggle_pago(self, event):
@@ -305,17 +302,25 @@ class AppFacturacion:
         if val in ["e", "efectivo"]:
             self.entry_pago.delete(0, tk.END)
             self.entry_pago.insert(0, "Efectivo")
-            self.entry_cliente.focus_set()
         elif val in ["n", "nequi"]:
             self.entry_pago.delete(0, tk.END)
             self.entry_pago.insert(0, "Nequi")
-            self.entry_cliente.focus_set()
         else:
             messagebox.showwarning("Atención", "Escriba 'e' para Efectivo o 'n' para Nequi.")
             self.entry_pago.focus_set()
+            return "break"
+        
+        self.entry_recibido.focus_set()
+        self.actualizar_vista_factura()
+        return "break"
+
+    def on_recibido_enter(self, event):
+        self.entry_cliente.focus_set()
+        self.actualizar_vista_factura()
         return "break"
 
     def filtrar_clientes(self, event):
+        self.actualizar_vista_factura()
         if event.keysym in ["Down", "Up", "Return"]: return
         busqueda = self.entry_cliente.get().lower()
         self.listbox_cli.delete(0, tk.END)
@@ -338,86 +343,144 @@ class AppFacturacion:
         self.finalizar_factura(None)
         return "break"
 
-    def actualizar_vista_factura(self, pago="", cliente="", fecha_hora=None):
+    def actualizar_vista_factura(self, fecha_hora=None):
         self.txt_factura.config(state="normal")
         self.txt_factura.delete("1.0", tk.END)
-        self.linea_a_item_idx = {} # Reiniciamos el diccionario de líneas
+        self.linea_a_item_idx = {} 
 
         if fecha_hora is None:
-            fecha_str = "dia/mes/año"
-            hora_str = "horas:minutos"
-        else:
-            fecha_str = fecha_hora.strftime("%d/%m/%Y")
-            hora_str = fecha_hora.strftime("%H:%M")
+            fecha_hora = datetime.now()
 
-        encabezado = f"""PANADERIA Y RESTAURANTE
-      MI SALSA
--------------------
-EDWARD ARROYAVE
-NIT:1130598879
-FECHA:{fecha_str} HORA: {hora_str}
-VENDEDOR: MIGUEL
--------------------\n"""
+        fecha_str = fecha_hora.strftime("%d/%m/%Y")
+        hora_str = fecha_hora.strftime("%H:%M")
+
+        # --- Lógica de Extracción de Cliente y NIT ---
+        cliente_input = self.entry_cliente.get().strip()
+        nit_cc = "222222222222"
+        nombre_cliente = cliente_input
+
+        if cliente_input:
+            match = re.search(r'nit\s*([0-9\-]+)', cliente_input.lower())
+            if match:
+                nit_cc = match.group(1)
+                nombre_cliente = re.sub(r'(?i)nit\s*[0-9\-]+', '', cliente_input).strip()
+            
+            if not nombre_cliente:
+                nombre_cliente = "CONSUMIDOR FINAL"
+            else:
+                nombre_cliente = nombre_cliente.upper() if nombre_cliente == "CONSUMIDOR FINAL" else nombre_cliente.title()
+        else:
+            nombre_cliente = "Nombre"
+
+        metodo_pago = self.entry_pago.get().strip().title() or "Efectivo"
+
+        ancho_total = 40
+        def centrar(texto):
+            return '\n'.join(linea.strip().center(ancho_total) for linea in texto.split('\n'))
+
+        encabezado_negocio = """PANADERIA Y RESTAURANTE
+MI SALSA
+Nit:1130598879
+Dir: CALLE 1 # TV. 1-250
+Cel: 3023942042"""
+
+        encabezado = centrar(encabezado_negocio) + "\n\n\n"
+        encabezado += f"FACTURA ELECTRONICA DE VENTA\n\n\n"
+        encabezado += f"Cajero        : Miguel Angel O.\n"
+        encabezado += f"Fecha         : {fecha_str} HORA: {hora_str}\n"
+        encabezado += f"Forma de pago : {metodo_pago}\n"
+        encabezado += f"Cliente       : {nombre_cliente}\n"
+        encabezado += f"Nit/CC        : {nit_cc}\n"
+        encabezado += "-" * ancho_total + "\n"
         
+        # Títulos de las columnas alineados (Cant 5, Produc, Total derecha)
+        titulos = "Can. Produc." + " " * (ancho_total - 12 - 5) + "Total"
+        encabezado += f"{titulos}\n"
+
         self.txt_factura.insert(tk.END, encabezado)
         
-        suma = 0
+        # Aplicamos la negrita y centrado visual al encabezado de la tienda
+        self.txt_factura.tag_add("bold_center", "1.0", "9.0")
+        self.txt_factura.tag_configure("bold_center", font=("Courier", 10, "bold"), justify="center")
+
         texto_final = encabezado
+        suma = 0
+        suma_items = 0
         
+        # --- Lógica de Productos y Columnas (5 espacios para cantidad) ---
         if not self.factura_items:
-            vacio_str = "   Cant. Producto        $precio\n"
+            vacio_str = "1    Producto Ejemplo                $0\n"
             self.txt_factura.insert(tk.END, vacio_str)
             texto_final += vacio_str
         else:
             for idx, item in enumerate(self.factura_items):
                 suma += item["precio"]
                 
-                # Registramos en qué línea física del widget Text comienza este producto
+                # --- CAMBIO AQUÍ: Solo suma la cantidad si el producto NO es el domicilio ---
+                if item["prod"] != "domicilio":
+                    suma_items += item["cant"]
+                
                 linea_inicio = int(self.txt_factura.index("end-1c").split('.')[0])
                 
                 texto_item = ""
-                desc_producto = f'{item["cant"]} {item["prod"].title()}'
+                cant_str = str(item["cant"]).ljust(5) # 5 espacios exactos
+                desc_completa = item["prod"].capitalize() # Solo la primera en mayúscula
                 precio_str = f"${item['precio']}"
-                ancho_max_texto = 28 
                 
-                palabras = desc_producto.split()
-                lineas_producto = []
-                linea_actual = ""
+                ancho_precio = len(precio_str)
+                ancho_prod = ancho_total - 5 - ancho_precio - 1
+                if ancho_prod < 10: ancho_prod = 10
                 
-                for palabra in palabras:
-                    if len(linea_actual) + len(palabra) + (1 if linea_actual else 0) <= ancho_max_texto:
-                        linea_actual += (" " if linea_actual else "") + palabra
+                palabras = desc_completa.split()
+                lineas_prod = []
+                linea_act = ""
+                
+                for p in palabras:
+                    if len(linea_act) + len(p) + (1 if linea_act else 0) <= ancho_prod:
+                        linea_act += (" " if linea_act else "") + p
                     else:
-                        lineas_producto.append(linea_actual)
-                        linea_actual = palabra
-                if linea_actual:
-                    lineas_producto.append(linea_actual)
-                if not lineas_producto: lineas_producto = [desc_producto[:ancho_max_texto]]
+                        lineas_prod.append(linea_act)
+                        linea_act = p
+                if linea_act:
+                    lineas_prod.append(linea_act)
+                if not lineas_prod: lineas_prod = [""]
 
-                for i, linea in enumerate(lineas_producto):
-                    if i == len(lineas_producto) - 1:
-                        espacios = 39 - len(linea) - len(precio_str)
-                        if espacios < 1: espacios = 1
-                        texto_item += f"{linea}{' ' * espacios}{precio_str}\n"
-                    else:
-                        texto_item += f"{linea}\n"
+                espacios_medio = ancho_total - 5 - len(lineas_prod[0]) - ancho_precio
+                texto_item += f"{cant_str}{lineas_prod[0]}{' ' * espacios_medio}{precio_str}\n"
+                
+                for linea in lineas_prod[1:]:
+                    texto_item += f"     {linea}\n" # Mismos 5 espacios abajo
 
                 self.txt_factura.insert(tk.END, texto_item)
                 texto_final += texto_item
                 
-                # Registramos la línea final del producto
                 linea_fin = int(self.txt_factura.index("end-1c").split('.')[0])
-                
-                # Mapeamos todas las líneas físicas de este bloque al índice exacto del item
                 for l in range(linea_inicio, linea_fin):
                     self.linea_a_item_idx[l] = idx
 
-        pie = f"\n-------------------\n"
-        suma_str = f'TOTAL:{" "*20}${suma}'
-        pie += f'{suma_str}\n'
-        pie += "-------------------\n\n"
-        pie += f'FORMA PAGO: {pago if pago else ""}\n'
-        pie += f'CLIENTE: {cliente if cliente else "Nombre"}\n'
+        # --- Lógica de Devuelta ---
+        recibido_str = self.entry_recibido.get().strip()
+        recibido = int(recibido_str) if recibido_str.isdigit() else suma
+        if recibido < suma: recibido = suma # Evita devoluciones negativas por error
+        devuelta = recibido - suma
+
+        pie = "\n" + "-" * ancho_total + "\n"
+        
+        def alinear_derecha(etiqueta, valor_str):
+            espacios = ancho_total - len(etiqueta) - len(valor_str)
+            if espacios < 1: espacios = 1
+            return f"{etiqueta}{' ' * espacios}{valor_str}\n"
+
+        pie += alinear_derecha("T O T A L............", f"${suma}")
+        pie += alinear_derecha("TOTAL ITEMS..........", f"{suma_items}\n\n")
+        pie += centrar("-----------[ MEDIOS DE PAGO ]-----------") + "\n\n"
+        
+        pie += alinear_derecha(metodo_pago.upper(), f"${recibido}")
+        pie += alinear_derecha("CAMBIO:", f"${devuelta}")
+        pie += "\n\n"
+        pie += centrar("Fabricante del software y proveedor") + "\n"
+        pie += centrar("tecnológico:") + "\n\n"
+        pie += centrar("MAOAZA_king - CC: 1107844397") + "\n\n"
 
         self.txt_factura.insert(tk.END, pie)
         texto_final += pie
@@ -426,11 +489,9 @@ VENDEDOR: MIGUEL
         return texto_final
 
     def interactuar_factura_click(self, event):
-        # Obtenemos exactamente la línea física donde se hizo doble clic
         posicion = self.txt_factura.index(f"@{event.x},{event.y}")
         linea_clicada = int(posicion.split('.')[0])
         
-        # Verificamos si la línea pertenece a un producto válido
         if linea_clicada not in self.linea_a_item_idx:
             return
             
@@ -447,16 +508,14 @@ VENDEDOR: MIGUEL
         
         respuesta = messagebox.askyesno(
             "Modificar Producto", 
-            f"¿Deseas cargar '{producto_seleccionado['prod'].title()}' para corregirlo o eliminarlo?"
+            f"¿Deseas cargar '{producto_seleccionado['prod'].capitalize()}' para corregirlo o eliminarlo?"
         )
         
         if respuesta:
             self.entry_cant.delete(0, tk.END)
             self.entry_cant.insert(0, str(producto_seleccionado["cant"]))
-            
             self.entry_prod.delete(0, tk.END)
             self.entry_prod.insert(0, producto_seleccionado["prod"])
-            
             self.entry_precio.delete(0, tk.END)
             self.entry_precio.insert(0, str(producto_seleccionado["precio"]))
             
@@ -466,8 +525,7 @@ VENDEDOR: MIGUEL
             self.entry_cant.select_range(0, tk.END)
 
     def subir_archivos_github(self):
-        if not os.path.exists(CONFIG_JSON):
-            return
+        if not os.path.exists(CONFIG_JSON): return
 
         try:
             with open(CONFIG_JSON, "r", encoding="utf-8") as f:
@@ -476,15 +534,11 @@ VENDEDOR: MIGUEL
         except Exception:
             return
 
-        if not TOKEN or TOKEN == "apidegithub" or TOKEN.strip() == "":
-            return
+        if not TOKEN or TOKEN == "apidegithub" or TOKEN.strip() == "": return
 
         USUARIO = "MAOAZAking"
         REPO = "panaderia_y_restaurante_mi_salsa"
-        archivos_a_subir = {
-            "productos_y_precios.json": PROD_JSON,
-            "clientes.json": CLI_JSON
-        }
+        archivos_a_subir = {"productos_y_precios.json": PROD_JSON, "clientes.json": CLI_JSON}
 
         headers = {
             "Authorization": f"Bearer {TOKEN}",
@@ -509,14 +563,7 @@ VENDEDOR: MIGUEL
                         data_github = json.loads(response.read().decode("utf-8"))
                         sha = data_github.get("sha")
                 except urllib.error.HTTPError as e:
-                    # Esto imprimirá el error exacto de GitHub en la consola de comandos
-                    print(f"URL fallida: {url}")
-                    print(f"Código de error HTTP: {e.code} - {e.reason}")
-                    print(f"Respuesta de GitHub: {e.read().decode('utf-8')}")
-                    errores.append(f"No se pudo descargar {nombre_github}: HTTP Error {e.code}")
-            # Esto imprimirá el error exacto de GitHub en la consola de comandos
-                    # except urllib.error.HTTPError as e:
-                    #         if e.code != 404: raise e
+                    pass
 
                 payload = {
                     "message": "Actualización automática de POS tras emitir factura",
@@ -534,29 +581,61 @@ VENDEDOR: MIGUEL
                 errores.append(f"Fallo al subir {nombre_github}: {str(e)}")
                 
         if errores:
-            mensaje = "La factura se imprimió correctamente, pero no se pudo actualizar la base de datos en GitHub.\n\nDetalles:\n" + "\n".join(errores)
+            mensaje = "La factura se imprimió, pero falló GitHub.\n\nDetalles:\n" + "\n".join(errores)
             messagebox.showerror("Error de Subida", mensaje)
 
     def finalizar_factura(self, event):
-        cliente = self.entry_cliente.get().strip().title()
-        pago = self.entry_pago.get().strip().title()
+        cliente_input = self.entry_cliente.get().strip()
         
-        if not cliente:
-            messagebox.showerror("Error", "Ingrese el nombre del cliente.")
-            return "break"
+        # --- Alerta de Nombre Vacío ---
+        if not cliente_input:
+            respuesta = messagebox.askyesno(
+                "Falta Nombre", 
+                "No ha ingresado el nombre del cliente.\n\n¿Desea regresar para poner el nombre?\n\n(Sí = Regresar, No = Continuar sin nombre)",
+                default=messagebox.YES
+            )
+            if respuesta:
+                self.entry_cliente.focus_set()
+                return "break"
+            else:
+                self.entry_cliente.insert(0, "CONSUMIDOR FINAL")
+                cliente_input = "CONSUMIDOR FINAL"
 
-        if cliente not in self.clientes_db:
-            self.clientes_db.append(cliente)
+        # Guarda el cliente limpio de NIT en la base de datos local
+        nombre_limpio_db = cliente_input
+        match_db = re.search(r'(?i)nit\s*[0-9\-]+', cliente_input)
+        if match_db:
+            n = re.sub(r'(?i)nit\s*[0-9\-]+', '', cliente_input).strip()
+            if n: nombre_limpio_db = n.title()
+        else:
+            nombre_limpio_db = cliente_input.title() if cliente_input != "CONSUMIDOR FINAL" else cliente_input
+
+        if nombre_limpio_db and nombre_limpio_db != "CONSUMIDOR FINAL" and nombre_limpio_db not in self.clientes_db:
+            self.clientes_db.append(nombre_limpio_db)
             self.guardar_json(CLI_JSON, self.clientes_db)
 
+        # Genera el texto final leyendo la hora exacta
         ahora = datetime.now()
-        texto_final = self.actualizar_vista_factura(pago, cliente, ahora)
+        texto_final = self.actualizar_vista_factura(ahora)
 
-        nombre_cliente_limpio = cliente.replace(" ", "_")
-        str_fecha = ahora.strftime("%d_%m_%Y_%H_%M")
-        nombre_archivo = f"{nombre_cliente_limpio}_{str_fecha}.txt"
-        ruta_archivo = os.path.join(application_path, nombre_archivo)
+        # --- Lógica de Carpetas por Fecha Actual ---
+        meses = {1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril', 5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto', 9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre'}
+        nombre_carpeta = f"{ahora.day}-{meses[ahora.month]}-{ahora.year}"
+        ruta_carpeta = os.path.join(application_path, nombre_carpeta)
+        
+        if not os.path.exists(ruta_carpeta):
+            os.makedirs(ruta_carpeta)
 
+        # Prepara el nombre de guardado del archivo
+        nombre_archivo_cliente = "CONSUMIDOR_FINAL"
+        if nombre_limpio_db:
+            nombre_archivo_cliente = nombre_limpio_db.replace(" ", "_")
+            
+        str_hora = ahora.strftime("%H_%M_%S")
+        nombre_archivo = f"{nombre_archivo_cliente}_{str_hora}.txt"
+        ruta_archivo = os.path.join(ruta_carpeta, nombre_archivo)
+
+        # Guarda e Imprime
         try:
             with open(ruta_archivo, "w", encoding="utf-8") as f:
                 f.write(texto_final)
@@ -572,13 +651,15 @@ VENDEDOR: MIGUEL
 
         self.subir_archivos_github()
 
+        # Limpiar Todo
         self.factura_items = []
         self.domicilio_eliminado = False
         self.entry_cant.delete(0, tk.END)
         self.entry_prod.delete(0, tk.END)
         self.entry_precio.delete(0, tk.END)
-        self.entry_cliente.delete(0, tk.END)
         self.entry_pago.delete(0, tk.END)
+        self.entry_recibido.delete(0, tk.END)
+        self.entry_cliente.delete(0, tk.END)
         
         self.actualizar_vista_factura()
         self.entry_cant.focus_set()

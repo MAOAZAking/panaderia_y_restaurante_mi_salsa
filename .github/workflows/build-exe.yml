@@ -1,0 +1,38 @@
+name: Generar EXE para Windows
+
+# Esto le dice a GitHub que ejecute esto cada vez que hagas un "push" (commit) a la rama main
+on:
+  push:
+    branches:
+      - main # Si tu rama principal se llama "master", cámbialo aquí.
+
+jobs:
+  build:
+    # AQUÍ ESTÁ EL TRUCO: Le pedimos a GitHub una máquina virtual con Windows
+    runs-on: windows-latest 
+
+    steps:
+    - name: Descargar el código del repositorio
+      uses: actions/checkout@v4
+
+    - name: Configurar Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12' # Usamos la versión de Python que estás utilizando
+
+    - name: Instalar PyInstaller
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+
+    - name: Compilar el archivo de Python a EXE
+      run: |
+        # Usamos --onefile para un solo archivo y --windowed para ocultar la consola negra de fondo
+        pyinstaller --noconfirm --onefile --windowed --icon="logo-mi-salsa.ico" --name="Facturacion_MiSalsa" facturacion_misalsa.py
+
+    - name: Guardar el EXE como versión descargable (Artifact)
+      uses: actions/upload-artifact@v4
+      with:
+        # Esto le pone un nombre único basado en el número de commit para el versionamiento
+        name: MiSalsa-Version-${{ github.run_number }}
+        path: dist/Facturacion_MiSalsa.exe
