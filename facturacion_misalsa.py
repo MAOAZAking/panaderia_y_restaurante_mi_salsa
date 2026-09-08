@@ -374,7 +374,7 @@ class AppFacturacion:
 
         metodo_pago = self.entry_pago.get().strip().title() or "Efectivo"
 
-        ancho_total = 40
+        ancho_total = 29
         def centrar(texto):
             return '\n'.join(linea.strip().center(ancho_total) for linea in texto.split('\n'))
 
@@ -471,16 +471,16 @@ Cel: 3023942042"""
             if espacios < 1: espacios = 1
             return f"{etiqueta}{' ' * espacios}{valor_str}\n"
 
-        pie += alinear_derecha("T O T A L............", f"${suma}")
-        pie += alinear_derecha("TOTAL ITEMS..........", f"{suma_items}\n\n")
-        pie += centrar("-----------[ MEDIOS DE PAGO ]-----------") + "\n\n"
+        pie += alinear_derecha("T O T A L.......", f"${suma}")
+        pie += alinear_derecha("TOTAL ITEMS.....", f"{suma_items}\n\n")
+        pie += centrar("----[ MEDIOS DE PAGO ]---") + "\n\n"
         
         pie += alinear_derecha(metodo_pago.upper(), f"${recibido}")
         pie += alinear_derecha("CAMBIO:", f"${devuelta}")
         pie += "\n\n"
-        pie += centrar("Fabricante del software y proveedor") + "\n"
-        pie += centrar("tecnológico:") + "\n\n"
-        pie += centrar("- MAOAZA_king -") + "\n\n"
+        pie += centrar("Fabricante del software y") + "\n"
+        pie += centrar("proveedor tecnológico:") + "\n\n"
+        pie += centrar("- MAOAZA_king -")
 
         self.txt_factura.insert(tk.END, pie)
         texto_final += pie
