@@ -380,7 +380,7 @@ class AppFacturacion:
 
         encabezado_negocio = """PANADERIA Y RESTAURANTE
 MI SALSA
-Nit:1130598879
+Nit: 1130598879
 Dir: CALLE 1 # TV. 1-250
 Cel: 3023942042"""
 
@@ -480,7 +480,7 @@ Cel: 3023942042"""
         pie += "\n\n"
         pie += centrar("Fabricante del software y proveedor") + "\n"
         pie += centrar("tecnológico:") + "\n\n"
-        pie += centrar("MAOAZA_king - CC: 1107844397") + "\n\n"
+        pie += centrar("- MAOAZA_king -") + "\n\n"
 
         self.txt_factura.insert(tk.END, pie)
         texto_final += pie
