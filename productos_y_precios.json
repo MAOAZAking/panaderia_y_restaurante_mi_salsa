@@ -511,5 +511,8 @@
     },
     "almuerzo complejo ajiaco, arroz con pollo": {
         "precio": 16000
+    },
+    "bandeja chuleta de pollo, fijoles": {
+        "precio": 14000
     }
 }
