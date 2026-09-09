@@ -508,5 +508,8 @@
     },
     "jugo en caja personal": {
         "precio": 2500
+    },
+    "almuerzo complejo ajiaco, arroz con pollo": {
+        "precio": 16000
     }
 }
