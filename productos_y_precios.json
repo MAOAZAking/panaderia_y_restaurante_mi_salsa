@@ -535,5 +535,8 @@
     },
     "almuerzo completo sancocho de pescado, spaghetti, pescado frito": {
         "precio": 16000
+    },
+    "colombiana 2.5l": {
+        "precio": 8000
     }
 }
