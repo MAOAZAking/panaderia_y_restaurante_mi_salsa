@@ -506,7 +506,19 @@
     "desayuno revuelto completo": {
         "precio": 12900
     },
-    "ajiaco": {
-        "precio": 6000
+    "jugo en caja personal": {
+        "precio": 2500
+    },
+    "almuerzo complejo ajiaco, arroz con pollo": {
+        "precio": 16000
+    },
+    "bandeja chuleta de pollo, fijoles": {
+        "precio": 14000
+    },
+    "bandeja arroz con pollo": {
+        "precio": 14000
+    },
+    "desayuno revuelto, arroz": {
+        "precio": 6500
     }
 }
