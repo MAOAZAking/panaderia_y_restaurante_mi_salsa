@@ -526,5 +526,8 @@
     },
     "almuerzo completo sanchocho pescado, fijoles y pescado frito": {
         "precio": 16000
+    },
+    "milo caliente": {
+        "precio": 6000
     }
 }
