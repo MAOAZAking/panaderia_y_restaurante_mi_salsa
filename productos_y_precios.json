@@ -538,5 +538,8 @@
     },
     "colombiana 2.5l": {
         "precio": 8000
+    },
+    "leche en polvo": {
+        "precio": 2000
     }
 }
