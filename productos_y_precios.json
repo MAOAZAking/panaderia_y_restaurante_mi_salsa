@@ -541,5 +541,8 @@
     },
     "leche en polvo": {
         "precio": 2000
+    },
+    "milo tibio": {
+        "precio": 6000
     }
 }
