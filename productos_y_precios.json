@@ -550,5 +550,11 @@
     },
     "yogurt de fresa": {
         "precio": 3000
+    },
+    "huevo tibio": {
+        "precio": 1200
+    },
+    "avena en bolsa": {
+        "precio": 3000
     }
 }
