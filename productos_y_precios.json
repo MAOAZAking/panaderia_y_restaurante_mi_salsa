@@ -562,5 +562,11 @@
     },
     "bandeja lenteja, frilete de pollo": {
         "precio": 14000
+    },
+    "almuerzo completo sanchocho, lenteja, filete de pollo": {
+        "precio": 16000
+    },
+    "almuerzo completo sancocho, (sin principio), chuleta de cerdo": {
+        "precio": 16000
     }
 }
