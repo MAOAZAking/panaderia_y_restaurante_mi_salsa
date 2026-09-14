@@ -574,5 +574,8 @@
     },
     "almuerzo completo cumplea\u00f1os sancocho, firjol, pollo a la plancha": {
         "precio": 22000
+    },
+    "almuerzo completo sancocho, lenteja, res asada": {
+        "precio": 16000
     }
 }
