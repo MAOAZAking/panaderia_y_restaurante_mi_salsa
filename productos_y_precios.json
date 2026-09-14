@@ -556,5 +556,8 @@
     },
     "avena en bolsa": {
         "precio": 3000
+    },
+    "gaseosa manzana personal": {
+        "precio": 3500
     }
 }
