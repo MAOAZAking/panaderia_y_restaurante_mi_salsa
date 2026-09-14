@@ -577,5 +577,8 @@
     },
     "almuerzo completo sancocho, lenteja, res asada": {
         "precio": 16000
+    },
+    "almuerzo completo sancocho, lenteja, carne en bistec": {
+        "precio": 16000
     }
 }
