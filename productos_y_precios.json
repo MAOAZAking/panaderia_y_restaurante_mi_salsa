@@ -568,5 +568,8 @@
     },
     "almuerzo completo sancocho, (sin principio), chuleta de cerdo": {
         "precio": 16000
+    },
+    "bandeja lenteja, filete cerdo": {
+        "precio": 14000
     }
 }
