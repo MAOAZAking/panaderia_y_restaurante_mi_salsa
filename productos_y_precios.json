@@ -586,5 +586,8 @@
     },
     "almuerzo completo,sopa de pasta,frijoles,res asada": {
         "precio": 16000
+    },
+    "sopa, mucha ensalda y filete de pollo (sin nada mas)": {
+        "precio": 13000
     }
 }
