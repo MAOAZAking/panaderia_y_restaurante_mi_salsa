@@ -583,5 +583,8 @@
     },
     "jugo del valle 1.5l": {
         "precio": 8000
+    },
+    "almuerzo completo,sopa de pasta,frijoles,res asada": {
+        "precio": 16000
     }
 }
