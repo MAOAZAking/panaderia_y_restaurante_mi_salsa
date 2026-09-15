@@ -592,5 +592,8 @@
     },
     "almuerzo completo sopa, alvera, pollo en bistec": {
         "precio": 16000
+    },
+    "bandeja firjoles, chuleta de pollo": {
+        "precio": 14000
     }
 }
