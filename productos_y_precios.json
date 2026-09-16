@@ -32,6 +32,9 @@
     "pan 2000": {
         "precio": 2000
     },
+    "bu\u00f1uelos": {
+        "precio": 1000
+    },
     "desayuno completo ranchero": {
         "precio": 10000
     },
@@ -44,13 +47,10 @@
     "agua saborizada manzana": {
         "precio": 2500
     },
-    "agua saborizada h2o limon": {
-        "precio": 3500
+    "agua saborizada limon": {
+        "precio": 2500
     },
     "gaseosa quatro 1.5l": {
-        "precio": 8000
-    },
-    "jugo del valle 1.5l": {
         "precio": 8000
     },
     "papa aborrajada": {
@@ -83,6 +83,9 @@
     "pan coco": {
         "precio": 600
     },
+    "dedo": {
+        "precio": 1000
+    },
     "empanada": {
         "precio": 1500
     },
@@ -96,6 +99,12 @@
         "precio": 1000
     },
     "arepita": {
+        "precio": 1000
+    },
+    "arepita panaderia": {
+        "precio": 1000
+    },
+    "arepita horno": {
         "precio": 1000
     },
     "pan 1000": {
@@ -116,56 +125,32 @@
     "croissant": {
         "precio": 1700
     },
+    "agua saborizada h2o limon": {
+        "precio": 3500
+    },
     "leche mediana": {
         "precio": 3200
     },
     "leche grande": {
         "precio": 6500
     },
+    "deditos": {
+        "precio": 1000
+    },
     "carne en bistec": {
         "precio": 13000
     },
-    "agua natural mini": {
-        "precio": 1000
+    "glacear gran cola": {
+        "precio": 2500
     },
     "agua natural personal": {
-        "precio": 2000
-    },
-    "agua natural 1l": {
-        "precio": 3000
+        "precio": 1000
     },
     "agua con gas personal": {
         "precio": 3000
     },
-    "glacial cola negra personal": {
+    "glacear manzana": {
         "precio": 2500
-    },
-    "glacial cola negra 1l": {
-        "precio": 4000
-    },
-    "glacial cola roja personal": {
-        "precio": 2500
-    },
-    "glacial cola roja 1l": {
-        "precio": 4000
-    },
-    "glacial manzana personal": {
-        "precio": 2500
-    },
-    "glacial manzana 1l": {
-        "precio": 4000
-    },
-    "glacial uva personal": {
-        "precio": 2500
-    },
-    "glacial uva 1l": {
-        "precio": 4000
-    },
-    "soda glacial personal": {
-        "precio": 2500
-    },
-    "soda glacial 1l": {
-        "precio": 4000
     },
     "papa rellena": {
         "precio": 5000
@@ -173,14 +158,11 @@
     "libra azucar": {
         "precio": 3000
     },
-    "glacial gran cola 1.7l": {
+    "gracial gran cola 1.7l": {
         "precio": 6000
     },
-    "speed max lata": {
-        "precio": 4000
-    },
-    "speed max botella": {
-        "precio": 5000
+    "speed max": {
+        "precio": 3000
     },
     "dona chocolate": {
         "precio": 3500
@@ -228,7 +210,7 @@
         "precio": 2000
     },
     "pan abuela": {
-        "precio": 3000
+        "precio": 5000
     },
     "jugo hit naranja-pi\u00f1a": {
         "precio": 3500
@@ -254,6 +236,9 @@
     "porcion torta chocolate": {
         "precio": 2500
     },
+    "porcion torta chisipitas de colores": {
+        "precio": 2500
+    },
     "porcion torta mantecada": {
         "precio": 2500
     },
@@ -266,6 +251,9 @@
     "pan ca\u00f1a": {
         "precio": 2000
     },
+    "agua natural mini": {
+        "precio": 1000
+    },
     "jugo hit mango": {
         "precio": 3500
     },
@@ -274,6 +262,18 @@
     },
     "colombiana personal": {
         "precio": 3500
+    },
+    "glacear cola negra": {
+        "precio": 2500
+    },
+    "glacear cola roja": {
+        "precio": 2500
+    },
+    "soda glacial personal": {
+        "precio": 2500
+    },
+    "glacear uva personal": {
+        "precio": 2500
     },
     "desayuno completo cacerola, cafe en leche": {
         "precio": 9000
@@ -452,12 +452,6 @@
     "milo frio": {
         "precio": 6000
     },
-    "milo caliente": {
-        "precio": 6000
-    },
-    "milo tibio": {
-        "precio": 6000
-    },
     "desayuno completo perico (sin cafe)": {
         "precio": 8500
     },
@@ -493,6 +487,9 @@
     },
     "pan 500": {
         "precio": 500
+    },
+    "glacear cola negra 1l": {
+        "precio": 4000
     },
     "jugo hit tropical personal": {
         "precio": 3500
@@ -530,6 +527,9 @@
     "almuerzo completo sanchocho pescado, fijoles y pescado frito": {
         "precio": 16000
     },
+    "milo caliente": {
+        "precio": 6000
+    },
     "bandeja frijol y res asada": {
         "precio": 14000
     },
@@ -541,6 +541,9 @@
     },
     "leche en polvo": {
         "precio": 2000
+    },
+    "milo tibio": {
+        "precio": 6000
     },
     "pony malta mini": {
         "precio": 2000
@@ -577,5 +580,20 @@
     },
     "almuerzo completo sancocho, lenteja, carne en bistec": {
         "precio": 16000
+    },
+    "jugo del valle 1.5l": {
+        "precio": 8000
+    },
+    "almuerzo completo,sopa de pasta,frijoles,res asada": {
+        "precio": 16000
+    },
+    "bandeja alberja, filete pollo": {
+        "precio": 14000
+    },
+    "almuerzo completo sopa, alvera, pollo en bistec": {
+        "precio": 16000
+    },
+    "bandeja firjoles, chuleta de pollo": {
+        "precio": 14000
     }
 }
