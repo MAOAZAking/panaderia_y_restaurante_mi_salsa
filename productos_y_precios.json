@@ -601,5 +601,8 @@
     },
     "desayuno completo revuelto (sin cafe)": {
         "precio": 6500
+    },
+    "bonyourt": {
+        "precio": 5000
     }
 }
