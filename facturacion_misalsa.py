@@ -1272,17 +1272,17 @@ class AppFacturacion:
 
         encabezado_negocio = """PANADERIA Y RESTAURANTE
 MI SALSA
-Nit: 1130598879
+Nit: 1130598879-6
 Dir: CALLE 1 # TV. 1-250
 Cel: 3023942042"""
 
         encabezado = centrar(encabezado_negocio) + "\n\n\n"
-        encabezado += f"FACTURA ELECTRONICA DE VENTA\n\n\n"
-        encabezado += f"Cajero        : Miguel Angel O.\n"
-        encabezado += f"Fecha         : {fecha_str} HORA: {hora_str}\n"
-        encabezado += f"Forma de pago : {metodo_pago}\n"
-        encabezado += f"Cliente       : {nombre_cliente}\n"
-        encabezado += f"Nit/CC        : {nit_cc}\n"
+        encabezado += f"FACTURA DIGITAL DE VENTA\n\n\n"
+        encabezado += f"Cajero       : Miguel Angel O.\n"
+        encabezado += f"Fecha        : {fecha_str} HORA: {hora_str}\n"
+        encabezado += f"Forma de pago: {metodo_pago}\n"
+        encabezado += f"Cliente      : {nombre_cliente}\n"
+        encabezado += f"Nit/CC       : {nit_cc}\n"
         encabezado += "-" * ancho_total + "\n"
         
         # Títulos de las columnas alineados (Cant 5, Produc, Total derecha)
