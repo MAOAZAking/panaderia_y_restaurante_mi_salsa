@@ -607,5 +607,8 @@
     },
     "almuerzo completo ajiaco, lenteja, res asada": {
         "precio": 16000
+    },
+    "colombiana 1.5l": {
+        "precio": 6000
     }
 }
