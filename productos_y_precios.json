@@ -607,5 +607,8 @@
     },
     "porcion frijolada": {
         "precio": 6000
+    },
+    "almuerzo completo fijolada, chicharron": {
+        "precio": 16000
     }
 }
