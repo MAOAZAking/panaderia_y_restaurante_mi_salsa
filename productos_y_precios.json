@@ -596,22 +596,16 @@
     "bandeja firjoles, chuleta de pollo": {
         "precio": 14000
     },
-    "desayuno completo perico, cafe en leche": {
-        "precio": 10500
+    "desayuno completo ranchero (sin cafe)": {
+        "precio": 8500
     },
-    "desayuno completo revuelto (sin cafe)": {
-        "precio": 6500
-    },
-    "bonyourt": {
-        "precio": 5000
-    },
-    "almuerzo completo ajiaco, lenteja, res asada": {
-        "precio": 16000
-    },
-    "colombiana 1.5l": {
+    "jugo fruttai mango 1l": {
         "precio": 6000
     },
-    "bandeja spaguetis, chuleta de pollo": {
-        "precio": 14000
+    "desayuno completo perico, cafe negro": {
+        "precio": 10000
+    },
+    "porcion frijolada": {
+        "precio": 6000
     }
 }
