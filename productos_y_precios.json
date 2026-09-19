@@ -610,5 +610,8 @@
     },
     "almuerzo completo fijolada, chicharron": {
         "precio": 16000
+    },
+    "kilo de azucar": {
+        "precio": 6000
     }
 }
