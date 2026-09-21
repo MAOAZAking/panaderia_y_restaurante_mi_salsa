@@ -616,5 +616,8 @@
     },
     "desayuno completo revuelto (sin cafe)": {
         "precio": 6500
+    },
+    "almuerzo sancocho, (frijol/pure), filete de pollo": {
+        "precio": 16000
     }
 }
