@@ -5,9 +5,13 @@ import os
 import sys
 from datetime import datetime
 import urllib.request
+import urllib.error
 import base64
 import re
 import openpyxl
+import threading
+import queue
+import time
 
 # ==========================================
 # CONFIGURACIÓN DE RUTAS Y ARCHIVOS JSON
@@ -19,10 +23,14 @@ else:
 
 PROD_JSON = os.path.join(application_path, "productos_y_precios.json")
 CLI_JSON = os.path.join(application_path, "clientes.json")
+PESOS_JSON = os.path.join(application_path, "pesos_productos.json")
 CONFIG_JSON = os.path.join(application_path, "config.json")
 
+# Cola global para procesar tareas de sincronización con GitHub en segundo plano
+github_queue = queue.Queue()
+
 # ==========================================
-# FUNCIONES AUXILIARES Y DE EXCEL
+# FUNCIONES AUXILIARES Y DE REGLAS DE NEGOCIO
 # ==========================================
 def es_bandeja(texto):
     palabras = texto.lower().split()
@@ -36,6 +44,22 @@ def es_almuerzo(texto):
     for p in palabras:
         if p.startswith("almu") or p.startswith("amuer") or p in ["alm", "almuer"]:
             return True
+    return False
+
+def es_porcion_especial(texto):
+    """
+    Regla: Si tiene 'porcion' o 'porción' junto con otras palabras,
+    y NINGUNA incluye 'torta', 'pastel' o 'arroz', retorna True.
+    """
+    palabras = [p.lower() for p in re.findall(r'\w+', texto)]
+    tiene_porcion = any(p in ["porcion", "porciond", "porción"] for p in palabras)
+    
+    if tiene_porcion and len(palabras) > 1:
+        prohibidas = ["torta", "pastel", "arroz"]
+        for p in palabras:
+            if any(prohibida in p for prohibida in prohibidas):
+                return False
+        return True
     return False
 
 def extraer_cliente_y_nit_cc(cliente_input):
@@ -73,11 +97,13 @@ def formatear_cliente_para_db(texto):
     else:
         return texto.title() if texto.lower() != "consumidor final" else "CONSUMIDOR FINAL"
 
+# ==========================================
+# FUNCIONES DE REGISTRO EN EXCEL
+# ==========================================
 def registrar_cuenta_por_cobrar(nombre_cliente, total):
     try:
         import openpyxl
     except ImportError:
-        messagebox.showerror("Error Excel", "La librería 'openpyxl' no está instalada.")
         return
 
     ruta_xlsx = os.path.join(application_path, "cuenta_por_cobrar.xlsx")
@@ -106,19 +132,13 @@ def registrar_cuenta_por_cobrar(nombre_cliente, total):
 
         ws.append([nombre_cliente, total])
         wb.save(ruta_final)
-    except PermissionError:
-        messagebox.showwarning(
-            "Archivo Excel Abierto",
-            f"No se pudo actualizar '{os.path.basename(ruta_final)}' porque está abierto en Excel.\nPor favor ciérrelo para registrar la cuenta por cobrar."
-        )
-    except Exception as e:
-        messagebox.showerror("Error Excel", f"Error al guardar en cuenta por cobrar: {str(e)}")
+    except Exception:
+        pass
 
 def registrar_factura_excel(nombre_cliente, total, fecha_hora):
     try:
         import openpyxl
     except ImportError:
-        messagebox.showerror("Error Excel", "La librería 'openpyxl' no está instalada.")
         return
 
     meses = {
@@ -187,67 +207,147 @@ def registrar_factura_excel(nombre_cliente, total, fecha_hora):
 
         hoja_objetivo.append([nombre_cliente, total, fecha_fmt])
         wb.save(ruta_final)
-    except PermissionError:
-        messagebox.showwarning(
-            "Archivo Excel Abierto",
-            f"No se pudo actualizar '{os.path.basename(ruta_final)}' porque está abierto en Excel.\nPor favor ciérrelo para registrar la factura."
-        )
-    except Exception as e:
-        messagebox.showerror("Error Excel", f"Error al guardar en facturas.xlsx: {str(e)}")
+    except Exception:
+        pass
 
 # ==========================================
-# FUNCIONES DE ARRANQUE 
+# FUNCIONES DE SINCRONIZACIÓN Y FUSIÓN DE ARCHIVOS
 # ==========================================
-def descargar_archivos_github():
+def obtener_config_github():
     if not os.path.exists(CONFIG_JSON):
-        messagebox.showwarning(
-            "Archivo de configuración faltante", 
-            "No se encontró el archivo 'config.json' junto al ejecutable.\n\nEl sistema iniciará de forma local y no se conectará a GitHub."
-        )
-        return
-
+        return None
     try:
         with open(CONFIG_JSON, "r", encoding="utf-8") as f:
-            config_data = json.load(f)
-            TOKEN = config_data.get("github_token")
+            config = json.load(f)
+            token = config.get("github_token")
+            if token and token != "apidegithub" and token.strip() != "":
+                return token
     except Exception:
+        pass
+    return None
+
+def descargar_y_fusionar_github():
+    token = obtener_config_github()
+    if not token:
         return
 
-    if not TOKEN or TOKEN == "apidegithub" or TOKEN.strip() == "":
-        return 
-
-    USUARIO = "MAOAZAking"
-    REPO = "panaderia_y_restaurante_mi_salsa"
-    archivos_a_bajar = {
-        "productos_y_precios.json": PROD_JSON,
-        "clientes.json": CLI_JSON
-    }
-
+    usuario = "MAOAZAking"
+    repo = "panaderia_y_restaurante_mi_salsa"
     headers = {
-        "Authorization": f"Bearer {TOKEN}",
+        "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github.v3+json",
         "User-Agent": "Python-App"
     }
 
-    errores = []
-    for nombre_github, ruta_local in archivos_a_bajar.items():
-        url = f"https://api.github.com/repos/{USUARIO}/{REPO}/contents/{nombre_github}"
+    archivos = {
+        "productos_y_precios.json": PROD_JSON,
+        "clientes.json": CLI_JSON,
+        "pesos_productos.json": PESOS_JSON
+    }
+
+    for nombre_gh, ruta_local in archivos.items():
+        url = f"https://api.github.com/repos/{usuario}/{repo}/contents/{nombre_gh}"
         try:
-            req_get = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req_get, timeout=5) as response:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=6) as response:
                 data_github = json.loads(response.read().decode("utf-8"))
                 if "content" in data_github:
-                    contenido_decodificado = base64.b64decode(data_github["content"]).decode("utf-8")
+                    contenido_remoto = json.loads(base64.b64decode(data_github["content"]).decode("utf-8"))
+                    
+                    # Fusión inteligente con datos locales
+                    if os.path.exists(ruta_local):
+                        try:
+                            with open(ruta_local, "r", encoding="utf-8") as fl:
+                                datos_locales = json.load(fl)
+                            
+                            if nombre_gh == "pesos_productos.json":
+                                # Sumar/combinar pesos locales y remotos
+                                for prod, peso in datos_locales.items():
+                                    contenido_remoto[prod] = max(contenido_remoto.get(prod, 0), peso)
+                            elif nombre_gh == "clientes.json":
+                                # Unión de listas sin duplicados
+                                union = list(set(datos_locales + contenido_remoto))
+                                contenido_remoto = union
+                            elif nombre_gh == "productos_y_precios.json":
+                                # Combinar claves de productos
+                                for k, v in datos_locales.items():
+                                    if k not in contenido_remoto:
+                                        contenido_remoto[k] = v
+                        except Exception:
+                            pass
+                    
                     with open(ruta_local, "w", encoding="utf-8") as f:
-                        f.write(contenido_decodificado)
-        except Exception as e:
-            errores.append(f"No se pudo descargar {nombre_github}: {str(e)}")
-    
-    if errores:
-        mensaje = "No se pudieron descargar los archivos de GitHub.\nSe usarán los datos locales.\n\nDetalles:\n" + "\n".join(errores)
-        messagebox.showwarning("Aviso de Sincronización", mensaje)
+                        json.dump(contenido_remoto, f, indent=4)
+        except Exception:
+            pass
+
+def subir_archivo_github(nombre_gh, ruta_local):
+    token = obtener_config_github()
+    if not token or not os.path.exists(ruta_local):
+        return False
+
+    usuario = "MAOAZAking"
+    repo = "panaderia_y_restaurante_mi_salsa"
+    url = f"https://api.github.com/repos/{usuario}/{repo}/contents/{nombre_gh}"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "Python-App"
+    }
+
+    try:
+        with open(ruta_local, "rb") as f:
+            contenido_b64 = base64.b64encode(f.read()).decode("utf-8")
+
+        # Intentar obtener el SHA si ya existe
+        sha = None
+        try:
+            req_get = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req_get, timeout=5) as resp:
+                data_gh = json.loads(resp.read().decode("utf-8"))
+                sha = data_gh.get("sha")
+        except Exception:
+            pass
+
+        payload = {
+            "message": f"Actualización automática POS: {nombre_gh}",
+            "content": contenido_b64,
+            "branch": "main"
+        }
+        if sha:
+            payload["sha"] = sha
+
+        data_json = json.dumps(payload).encode("utf-8")
+        req_put = urllib.request.Request(url, data=data_json, headers=headers, method="PUT")
+        with urllib.request.urlopen(req_put, timeout=6) as response:
+            return True
+    except Exception:
+        return False
+
+def worker_github():
+    """Hilo secundario en segundo plano que procesa la cola de subida a GitHub sin congelar el programa."""
+    while True:
+        tarea = github_queue.get()
+        if tarea is None:
+            break
+        nombre_gh, ruta_local = tarea
+        exito = False
+        reintentos = 0
+        while not exito and reintentos < 3:
+            exito = subir_archivo_github(nombre_gh, ruta_local)
+            if not exito:
+                time.sleep(5)
+                reintentos += 1
+        github_queue.task_done()
+
+# Iniciar hilo de sincronización en segundo plano
+threading.Thread(target=worker_github, daemon=True).start()
 
 def crear_archivos_base_si_no_existen():
+    if not os.path.exists(PESOS_JSON):
+        with open(PESOS_JSON, 'w', encoding='utf-8') as f:
+            json.dump({}, f, indent=4)
+
     if not os.path.exists(PROD_JSON):
         datos_base_prod = {
     "pan cacho": {
@@ -834,150 +934,151 @@ def crear_archivos_base_si_no_existen():
             json.dump(datos_base_prod, f, indent=4)
 
     if not os.path.exists(CLI_JSON):
+        datos_base_clien = {
+            "Hector Tmv",
+                "Termovapor",
+                "Sebastian Garcia (Prixma)",
+                "Juan Otero (Armametal)",
+                "Cristian (Tissue)",
+                "Yuli Laso (Porton Negro)",
+                "Edwin (Acrilan)",
+                "Julian Rios (Tissue)",
+                "Yoimer (Antiguo Control Papagayo)",
+                "Luisa (Arqustik)",
+                "Laura (Blockers Klhar)",
+                "Julian Jimenes (Grupo Textil)",
+                "Angie (Conaldesa)",
+                "Patricia (3 Piso)",
+                "Sara Grupo Textil",
+                "Juan Carlos (Bodega 13)",
+                "Manuel (Tmv)",
+                "Laminas Y Cortes Industriales Sa Nit 900035068-6",
+                "Guillermo (Galvanizado)",
+                "Jeimmy Valendia (Contactemos 1)",
+                "Harold (Aqustik)",
+                "Adelina (Cueva Del Humo)",
+                "Maria (Termovapor)",
+                "Susana (Bodega12)",
+                "Paola (Antiguo Control Papagayo)",
+                "Gabriela (Forraje)",
+                "Alejandro (Ingal Planta Fibra)",
+                "Katherin (Antiguo Control Papagayo)",
+                "Camilogutierrez (Motomart)",
+                "Viviana (Fundimetal)",
+                "Andrea (Tecnoempaques)",
+                "Fausto (Bodega 9)",
+                "Martha (Armametal)",
+                "Walter (Laminas Y Cortes)",
+                "David Silva (Tensoactivos)",
+                "Vanessa (Tissu)",
+                "Andera (Funales)",
+                "Coste\u00f1o (Grupo Textil)",
+                "Eduardo (Tintuvalle)",
+                ".",
+                "Felipe (Bodega 6)",
+                "Hector (Fabripunto)",
+                "Maria (Bronces)",
+                "Daniela Cardona (Berna)",
+                "Frank (Armametal)",
+                "Omar (Ipr)",
+                "Diana (Fundimetal)",
+                "Sofia (Rycarnes)",
+                "Jose (Rycarnes)",
+                "Guarda (Tisuu)",
+                "Uriel (Italcol - Cerca De Bomba Primax)",
+                "Marisol (Ecoindustrial)",
+                "Karen Dayana (Bodega 17 Donde El Paisa)",
+                "Johana (Sia Logistica)",
+                "Silquin Itda. Nit: 890325787",
+                "Silquin Itda Nit 890325787",
+                "Steven (Acrilan)",
+                "Victor Roman (Termovapor)",
+                "Wil Duque (Tensoactivos)",
+                "Abraham (Termovapor)",
+                "Fernanda Vargas (Grupotextil)",
+                "Estefania Cortez (Textiles Y Confecciones Del Valle)",
+                "Diana (El Paso Casa 169)",
+                "Luis Ramos (Holcim)",
+                "Yoselin (Intergrafic)",
+                "Tito (Megatextiles)",
+                "Luis (Tmv)",
+                "Mayra (Funales)",
+                "Duvan (Ingal Galvanizado)",
+                "Carolina",
+                "Carlos (Papagayo)",
+                "Leidy (Moto Mart)",
+                "Alexandra (Tissue)",
+                "Angie Suarez (Grupo Textil)",
+                "Sofia (Grupo Textil)",
+                "Deysi (Intergrafic)",
+                "Esteban (Jaramillo Mora)",
+                "Macar",
+                "Daniela (Ingal Fibra)",
+                "Yulieth Cuartas (Contactemos 2)",
+                "Marie Eco Equipos",
+                "Monica (Jaramillo Mora)",
+                "Jhonatan Zapata (Berna)",
+                "Jilary (Do\u00f1a Lupe)",
+                "Diana (Bodega 12)",
+                "Fabio Rodriguez (Remorques Dial)",
+                "Yeni (Armametal)",
+                "Camilo (Ipr Porteria 2)",
+                "Sandra Silba (Tisuue)",
+                "Ynmer (Fabrpunto)",
+                "Esteban (Grupo Textil)",
+                "Monica Posso (Corema)",
+                "Juan Carlos Diez (Bodega 13)",
+                "Alejandra (Sermac)",
+                "Alejandro Martinez",
+                "Yohana (Silquin)",
+                "Gloria Milena (Industrias Macar)",
+                "Sara Hernandez (Intergrafic)",
+                "Tensoactivos",
+                "Tmv",
+                "Radio (Termovapor)",
+                "Mishel Logistica (Tissue)",
+                "Daniela Olaya (Fadepal)",
+                "Contactamos Equipos Sas 805027728",
+                "Moffatt Nit 900152835-1",
+                "Arturo (Tubolaminas)",
+                "Tmi",
+                "Moffatt",
+                "Silquin Itda",
+                "Gabriel (Bodega 12)",
+                "Johana (Tintuvalle)",
+                "Marisol (Antiguo Control Papagayo)",
+                "Jaramillo Mora",
+                "Germ\u00e1n (Cueva Del Humo)",
+                "Isabel (Intergraphic)",
+                "Porteros (Tissue)",
+                "Julian (Motomart)",
+                "Giovanna (Bloques Klahr)",
+                "Ruben Cano (Jaramillo Mora)",
+                "Natalia (Remolques Dial)",
+                "Alvaro Campo (Diaco)",
+                "Andres (Tissue)",
+                "Ingal",
+                "Rodrigo (Prixma)",
+                "Jorge (Nuevo Control Papagayo)",
+                "Hector (Tmv)",
+                "Jeferson Toro (Armametal Principal)",
+                "Andres Amado (Proaceros)",
+                "Juan David Preciado (Tintuvalle)",
+                "Angela (Integrafic)",
+                "Yamileth (Fabripunto)",
+                "Alejandra (Berna)",
+                "Soexcol",
+                "Daniela (Tissue)",
+                "Soexco",
+                "Oscar (Porton Azul)",
+                "Lorena (Fabripunto)",
+                "Cecilia (Silquin)",
+                "Nestor (Bascula)",
+                "Raul Cardenas (Bodega 1)",
+                "Empresa Textiles Y Manofacturas Del Valle Sas"
+        }
         with open(CLI_JSON, 'w', encoding='utf-8') as f:
-            json.dump([
-    "Hector Tmv",
-    "Termovapor",
-    "Sebastian Garcia (Prixma)",
-    "Juan Otero (Armametal)",
-    "Cristian (Tissue)",
-    "Yuli Laso (Porton Negro)",
-    "Edwin (Acrilan)",
-    "Julian Rios (Tissue)",
-    "Yoimer (Antiguo Control Papagayo)",
-    "Luisa (Arqustik)",
-    "Laura (Blockers Klhar)",
-    "Julian Jimenes (Grupo Textil)",
-    "Angie (Conaldesa)",
-    "Patricia (3 Piso)",
-    "Sara Grupo Textil",
-    "Juan Carlos (Bodega 13)",
-    "Manuel (Tmv)",
-    "Laminas Y Cortes Industriales Sa Nit 900035068-6",
-    "Guillermo (Galvanizado)",
-    "Jeimmy Valendia (Contactemos 1)",
-    "Harold (Aqustik)",
-    "Adelina (Cueva Del Humo)",
-    "Maria (Termovapor)",
-    "Susana (Bodega12)",
-    "Paola (Antiguo Control Papagayo)",
-    "Gabriela (Forraje)",
-    "Alejandro (Ingal Planta Fibra)",
-    "Katherin (Antiguo Control Papagayo)",
-    "Camilogutierrez (Motomart)",
-    "Viviana (Fundimetal)",
-    "Andrea (Tecnoempaques)",
-    "Fausto (Bodega 9)",
-    "Martha (Armametal)",
-    "Walter (Laminas Y Cortes)",
-    "David Silva (Tensoactivos)",
-    "Vanessa (Tissu)",
-    "Andera (Funales)",
-    "Coste\u00f1o (Grupo Textil)",
-    "Eduardo (Tintuvalle)",
-    ".",
-    "Felipe (Bodega 6)",
-    "Hector (Fabripunto)",
-    "Maria (Bronces)",
-    "Daniela Cardona (Berna)",
-    "Frank (Armametal)",
-    "Omar (Ipr)",
-    "Diana (Fundimetal)",
-    "Sofia (Rycarnes)",
-    "Jose (Rycarnes)",
-    "Guarda (Tisuu)",
-    "Uriel (Italcol - Cerca De Bomba Primax)",
-    "Marisol (Ecoindustrial)",
-    "Karen Dayana (Bodega 17 Donde El Paisa)",
-    "Johana (Sia Logistica)",
-    "Silquin Itda. Nit: 890325787",
-    "Silquin Itda Nit 890325787",
-    "Steven (Acrilan)",
-    "Victor Roman (Termovapor)",
-    "Wil Duque (Tensoactivos)",
-    "Abraham (Termovapor)",
-    "Fernanda Vargas (Grupotextil)",
-    "Estefania Cortez (Textiles Y Confecciones Del Valle)",
-    "Diana (El Paso Casa 169)",
-    "Luis Ramos (Holcim)",
-    "Yoselin (Intergrafic)",
-    "Tito (Megatextiles)",
-    "Luis (Tmv)",
-    "Mayra (Funales)",
-    "Duvan (Ingal Galvanizado)",
-    "Carolina",
-    "Carlos (Papagayo)",
-    "Leidy (Moto Mart)",
-    "Alexandra (Tissue)",
-    "Angie Suarez (Grupo Textil)",
-    "Sofia (Grupo Textil)",
-    "Deysi (Intergrafic)",
-    "Esteban (Jaramillo Mora)",
-    "Macar",
-    "Daniela (Ingal Fibra)",
-    "Yulieth Cuartas (Contactemos 2)",
-    "Marie Eco Equipos",
-    "Monica (Jaramillo Mora)",
-    "Jhonatan Zapata (Berna)",
-    "Jilary (Do\u00f1a Lupe)",
-    "Diana (Bodega 12)",
-    "Fabio Rodriguez (Remorques Dial)",
-    "Yeni (Armametal)",
-    "Camilo (Ipr Porteria 2)",
-    "Sandra Silba (Tisuue)",
-    "Ynmer (Fabrpunto)",
-    "Esteban (Grupo Textil)",
-    "Monica Posso (Corema)",
-    "Juan Carlos Diez (Bodega 13)",
-    "Alejandra (Sermac)",
-    "Alejandro Martinez",
-    "Yohana (Silquin)",
-    "Gloria Milena (Industrias Macar)",
-    "Sara Hernandez (Intergrafic)",
-    "Tensoactivos",
-    "Tmv",
-    "Radio (Termovapor)",
-    "Mishel Logistica (Tissue)",
-    "Daniela Olaya (Fadepal)",
-    "Contactamos Equipos Sas 805027728",
-    "Moffatt Nit 900152835-1",
-    "Arturo (Tubolaminas)",
-    "Tmi",
-    "Moffatt",
-    "Silquin Itda",
-    "Gabriel (Bodega 12)",
-    "Johana (Tintuvalle)",
-    "Marisol (Antiguo Control Papagayo)",
-    "Jaramillo Mora",
-    "Germ\u00e1n (Cueva Del Humo)",
-    "Isabel (Intergraphic)",
-    "Porteros (Tissue)",
-    "Julian (Motomart)",
-    "Giovanna (Bloques Klahr)",
-    "Ruben Cano (Jaramillo Mora)",
-    "Natalia (Remolques Dial)",
-    "Alvaro Campo (Diaco)",
-    "Andres (Tissue)",
-    "Ingal",
-    "Rodrigo (Prixma)",
-    "Jorge (Nuevo Control Papagayo)",
-    "Hector (Tmv)",
-    "Jeferson Toro (Armametal Principal)",
-    "Andres Amado (Proaceros)",
-    "Juan David Preciado (Tintuvalle)",
-    "Angela (Integrafic)",
-    "Yamileth (Fabripunto)",
-    "Alejandra (Berna)",
-    "Soexcol",
-    "Daniela (Tissue)",
-    "Soexco",
-    "Oscar (Porton Azul)",
-    "Lorena (Fabripunto)",
-    "Cecilia (Silquin)",
-    "Nestor (Bascula)",
-    "Raul Cardenas (Bodega 1)",
-    "Empresa Textiles Y Manofacturas Del Valle Sas"
-], f, indent=4)
+            json.dump([datos_base_clien], f, indent=4)
 
 # ==========================================
 # CLASE PRINCIPAL DE LA APLICACIÓN
@@ -991,10 +1092,17 @@ class AppFacturacion:
         
         self.productos_db = self.cargar_json(PROD_JSON)
         self.clientes_db = self.cargar_json(CLI_JSON)
+        self.pesos_db = self.cargar_json(PESOS_JSON)
         
         self.factura_items = []
         self.domicilio_eliminado = False
         self.linea_a_item_idx = {} 
+
+        # Variables para control de navegación tipo Google Chrome en autocompletado
+        self.prod_texto_original = ""
+        self.cli_texto_original = ""
+        self.prod_sugerencias = []
+        self.cli_sugerencias = []
 
         self.construir_interfaz()
         self.actualizar_vista_factura()
@@ -1002,8 +1110,13 @@ class AppFacturacion:
         self.entry_cant.focus_set()
 
     def cargar_json(self, ruta):
-        with open(ruta, 'r', encoding='utf-8') as f:
-            return json.load(f)
+        if not os.path.exists(ruta):
+            return {} if "pesos" in ruta or "productos" in ruta else []
+        try:
+            with open(ruta, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return {} if "pesos" in ruta or "productos" in ruta else []
 
     def guardar_json(self, ruta, datos):
         with open(ruta, 'w', encoding='utf-8') as f:
@@ -1031,9 +1144,15 @@ class AppFacturacion:
         self.listbox_prod.pack(fill="x")
         self.listbox_prod.pack_forget() 
         
+        # BINDINGS TIPO GOOGLE CHROME - PRODUCTOS
         self.entry_prod.bind("<KeyRelease>", self.filtrar_productos)
-        self.entry_prod.bind("<Down>", lambda e: self.listbox_prod.focus_set() if self.listbox_prod.winfo_ismapped() else None)
+        self.entry_prod.bind("<Down>", self.focus_listbox_prod)
+        self.listbox_prod.bind("<KeyRelease-Down>", self.navegar_listbox_prod)
+        self.listbox_prod.bind("<KeyRelease-Up>", self.navegar_listbox_prod)
+        self.listbox_prod.bind("<Left>", self.editar_desde_sugerencia_prod)
+        self.listbox_prod.bind("<Right>", self.editar_desde_sugerencia_prod)
         self.listbox_prod.bind("<Return>", self.seleccionar_producto)
+        self.listbox_prod.bind("<ButtonRelease-1>", self.seleccionar_producto)
         self.entry_prod.bind("<Return>", self.on_prod_enter)
 
         tk.Label(frame_izq, text="Precio Total (Corregir si es necesario):", bg="#f4f4f4").pack(anchor="w", pady=(5,0))
@@ -1065,30 +1184,37 @@ class AppFacturacion:
         self.listbox_cli.pack(fill="x")
         self.listbox_cli.pack_forget()
         
+        # BINDINGS TIPO GOOGLE CHROME - CLIENTES
         self.entry_cliente.bind("<KeyRelease>", self.filtrar_clientes)
-        self.entry_cliente.bind("<Down>", lambda e: self.listbox_cli.focus_set() if self.listbox_cli.winfo_ismapped() else None)
+        self.entry_cliente.bind("<Down>", self.focus_listbox_cli)
+        self.listbox_cli.bind("<KeyRelease-Down>", self.navegar_listbox_cli)
+        self.listbox_cli.bind("<KeyRelease-Up>", self.navegar_listbox_cli)
+        self.listbox_cli.bind("<Left>", self.editar_desde_sugerencia_cli)
+        self.listbox_cli.bind("<Right>", self.editar_desde_sugerencia_cli)
         self.listbox_cli.bind("<Return>", self.seleccionar_cliente)
+        self.listbox_cli.bind("<ButtonRelease-1>", self.seleccionar_cliente)
         self.entry_cliente.bind("<Return>", self.finalizar_factura)
 
         self.txt_factura = tk.Text(frame_der, font=("Courier", 10), state="disabled", bg="white", wrap="word")
         self.txt_factura.pack(fill="both", expand=True)
         self.txt_factura.bind("<Double-Button-1>", self.interactuar_factura_click)
 
-    # --- LÓGICA DE EVENTOS ---
-    def on_cant_enter(self, event):
-        cant = self.entry_cant.get().strip()
-        if cant == "":
-            self.entry_pago.focus_set()
-        else:
-            self.entry_prod.focus_set()
-        return "break"
-
+    # --- LÓGICA TIPO CHROME: PRODUCTOS ---
     def filtrar_productos(self, event):
-        if event.keysym in ["Down", "Up", "Return"]: return
-        busqueda = self.entry_prod.get().lower()
+        if event.keysym in ["Down", "Up", "Return", "Left", "Right"]:
+            return
+        
+        busqueda = self.entry_prod.get()
+        self.prod_texto_original = busqueda
+        busqueda_lower = busqueda.lower()
+        
         self.listbox_prod.delete(0, tk.END)
-        if busqueda:
-            coincidencias = sorted([p for p in self.productos_db.keys() if busqueda in p.lower()])
+        if busqueda_lower:
+            coincidencias = [p for p in self.productos_db.keys() if busqueda_lower in p.lower()]
+            # ORDENAR SEGÚN EL PESO DE USO (MÁS UTILIZADOS PRIMERO)
+            coincidencias.sort(key=lambda x: (self.pesos_db.get(x, 0), x), reverse=True)
+            self.prod_sugerencias = coincidencias
+            
             if coincidencias:
                 self.listbox_prod.pack(fill="x", before=self.entry_precio)
                 for c in coincidencias:
@@ -1098,12 +1224,122 @@ class AppFacturacion:
         else:
             self.listbox_prod.pack_forget()
 
-    def seleccionar_producto(self, event):
-        seleccion = self.listbox_prod.get(tk.ACTIVE)
+    def focus_listbox_prod(self, event):
+        if self.listbox_prod.winfo_ismapped() and self.listbox_prod.size() > 0:
+            self.listbox_prod.focus_set()
+            self.listbox_prod.selection_clear(0, tk.END)
+            self.listbox_prod.selection_set(0)
+            self.listbox_prod.activate(0)
+            # Cargar primera recomendación en el recuadro
+            sug = self.listbox_prod.get(0)
+            self.entry_prod.delete(0, tk.END)
+            self.entry_prod.insert(0, sug)
+
+    def navegar_listbox_prod(self, event):
+        sel = self.listbox_prod.curselection()
+        if not sel:
+            return
+        index = sel[0]
+        
+        # Si sube más allá de la primera sugerencia, restaura texto original
+        if event.keysym == "Up" and index == 0:
+            self.entry_prod.delete(0, tk.END)
+            self.entry_prod.insert(0, self.prod_texto_original)
+            self.entry_prod.focus_set()
+            return
+
+        sug = self.listbox_prod.get(index)
         self.entry_prod.delete(0, tk.END)
-        self.entry_prod.insert(0, seleccion)
+        self.entry_prod.insert(0, sug)
+
+    def editar_desde_sugerencia_prod(self, event):
+        """Pasa el control al recuadro para editar el texto cargado normalmente"""
+        self.entry_prod.focus_set()
+        self.entry_prod.icursor(tk.END)
+
+    def seleccionar_producto(self, event):
+        sel = self.listbox_prod.curselection()
+        if sel:
+            seleccion = self.listbox_prod.get(sel[0])
+            self.entry_prod.delete(0, tk.END)
+            self.entry_prod.insert(0, seleccion)
         self.listbox_prod.pack_forget()
         self.on_prod_enter(None)
+        return "break"
+
+    # --- LÓGICA TIPO CHROME: CLIENTES ---
+    def filtrar_clientes(self, event):
+        self.actualizar_vista_factura()
+        if event.keysym in ["Down", "Up", "Return", "Left", "Right"]:
+            return
+        
+        busqueda = self.entry_cliente.get()
+        self.cli_texto_original = busqueda
+        busqueda_lower = busqueda.lower()
+        
+        self.listbox_cli.delete(0, tk.END)
+        if busqueda_lower:
+            coincidencias = sorted([c for c in self.clientes_db if busqueda_lower in c.lower()])
+            self.cli_sugerencias = coincidencias
+            if coincidencias:
+                self.listbox_cli.pack(fill="x")
+                for c in coincidencias:
+                    self.listbox_cli.insert(tk.END, c)
+            else:
+                self.listbox_cli.pack_forget()
+        else:
+            self.listbox_cli.pack_forget()
+
+    def focus_listbox_cli(self, event):
+        if self.listbox_cli.winfo_ismapped() and self.listbox_cli.size() > 0:
+            self.listbox_cli.focus_set()
+            self.listbox_cli.selection_clear(0, tk.END)
+            self.listbox_cli.selection_set(0)
+            self.listbox_cli.activate(0)
+            sug = self.listbox_cli.get(0)
+            self.entry_cliente.delete(0, tk.END)
+            self.entry_cliente.insert(0, sug)
+            self.actualizar_vista_factura()
+
+    def navegar_listbox_cli(self, event):
+        sel = self.listbox_cli.curselection()
+        if not sel:
+            return
+        index = sel[0]
+        
+        if event.keysym == "Up" and index == 0:
+            self.entry_cliente.delete(0, tk.END)
+            self.entry_cliente.insert(0, self.cli_texto_original)
+            self.entry_cliente.focus_set()
+            self.actualizar_vista_factura()
+            return
+
+        sug = self.listbox_cli.get(index)
+        self.entry_cliente.delete(0, tk.END)
+        self.entry_cliente.insert(0, sug)
+        self.actualizar_vista_factura()
+
+    def editar_desde_sugerencia_cli(self, event):
+        self.entry_cliente.focus_set()
+        self.entry_cliente.icursor(tk.END)
+
+    def seleccionar_cliente(self, event):
+        sel = self.listbox_cli.curselection()
+        if sel:
+            seleccion = self.listbox_cli.get(sel[0])
+            self.entry_cliente.delete(0, tk.END)
+            self.entry_cliente.insert(0, seleccion)
+        self.listbox_cli.pack_forget()
+        self.finalizar_factura(None)
+        return "break"
+
+    # --- ACCIONES Y EVENTOS DEL FORMULARIO ---
+    def on_cant_enter(self, event):
+        cant = self.entry_cant.get().strip()
+        if cant == "":
+            self.entry_pago.focus_set()
+        else:
+            self.entry_prod.focus_set()
         return "break"
 
     def on_prod_enter(self, event):
@@ -1119,10 +1355,14 @@ class AppFacturacion:
         cant = int(cant_str)
         precio_total = 0
         
+        # APLICACIÓN DE REGLAS DE PRECIO
         if es_bandeja(producto):
             precio_total = cant * 14000
         elif es_almuerzo(producto):
             precio_total = cant * 16000
+        elif es_porcion_especial(producto):
+            # Regla Porción Especial -> $7,000
+            precio_total = cant * 7000
         elif producto in self.productos_db:
             info = self.productos_db[producto]
             if "promocion" in info:
@@ -1160,6 +1400,7 @@ class AppFacturacion:
             precio_unitario = precio_total // cant
             self.productos_db[prod] = {"precio": precio_unitario}
             self.guardar_json(PROD_JSON, self.productos_db)
+            github_queue.put(("productos_y_precios.json", PROD_JSON))
             
         self.factura_items = [item for item in self.factura_items if item["prod"] != "domicilio"]
         self.factura_items.append({"cant": cant, "prod": prod, "precio": precio_total})
@@ -1223,30 +1464,6 @@ class AppFacturacion:
         self.actualizar_vista_factura()
         return "break"
 
-    def filtrar_clientes(self, event):
-        self.actualizar_vista_factura()
-        if event.keysym in ["Down", "Up", "Return"]: return
-        busqueda = self.entry_cliente.get().lower()
-        self.listbox_cli.delete(0, tk.END)
-        if busqueda:
-            coincidencias = sorted([c for c in self.clientes_db if busqueda in c.lower()])
-            if coincidencias:
-                self.listbox_cli.pack(fill="x")
-                for c in coincidencias:
-                    self.listbox_cli.insert(tk.END, c)
-            else:
-                self.listbox_cli.pack_forget()
-        else:
-            self.listbox_cli.pack_forget()
-
-    def seleccionar_cliente(self, event):
-        seleccion = self.listbox_cli.get(tk.ACTIVE)
-        self.entry_cliente.delete(0, tk.END)
-        self.entry_cliente.insert(0, seleccion)
-        self.listbox_cli.pack_forget()
-        self.finalizar_factura(None)
-        return "break"
-
     def actualizar_vista_factura(self, fecha_hora=None):
         self.txt_factura.config(state="normal")
         self.txt_factura.delete("1.0", tk.END)
@@ -1258,7 +1475,6 @@ class AppFacturacion:
         fecha_str = fecha_hora.strftime("%d/%m/%Y")
         hora_str = fecha_hora.strftime("%H:%M")
 
-        # --- Lógica de Extracción de Cliente y NIT / CC ---
         cliente_input = self.entry_cliente.get().strip()
         nombre_cliente, nit_cc = extraer_cliente_y_nit_cc(cliente_input)
 
@@ -1287,13 +1503,11 @@ Cel: 3023942042"""
         encabezado += f"Nit/CC       : {nit_cc}\n"
         encabezado += "-" * ancho_total + "\n"
         
-        # Títulos de las columnas alineados (Cant 5, Produc, Total derecha)
         titulos = "Can. Produc." + " " * (ancho_total - 12 - 5) + "Total"
         encabezado += f"{titulos}\n"
 
         self.txt_factura.insert(tk.END, encabezado)
         
-        # Aplicamos la negrita y centrado visual al encabezado de la tienda
         self.txt_factura.tag_add("bold_center", "1.0", "9.0")
         self.txt_factura.tag_configure("bold_center", font=("Courier", 10, "bold"), justify="center")
 
@@ -1301,7 +1515,6 @@ Cel: 3023942042"""
         suma = 0
         suma_items = 0
         
-        # --- Lógica de Productos y Columnas (5 espacios para cantidad) ---
         if not self.factura_items:
             vacio_str = "1    Producto Ejemplo                $0\n"
             self.txt_factura.insert(tk.END, vacio_str)
@@ -1310,15 +1523,14 @@ Cel: 3023942042"""
             for idx, item in enumerate(self.factura_items):
                 suma += item["precio"]
                 
-                # --- CAMBIO AQUÍ: Solo suma la cantidad si el producto NO es el domicilio ---
                 if item["prod"] != "domicilio":
                     suma_items += item["cant"]
                 
                 linea_inicio = int(self.txt_factura.index("end-1c").split('.')[0])
                 
                 texto_item = ""
-                cant_str = str(item["cant"]).ljust(5) # 5 espacios exactos
-                desc_completa = item["prod"].capitalize() # Solo la primera en mayúscula
+                cant_str = str(item["cant"]).ljust(5)
+                desc_completa = item["prod"].capitalize()
                 precio_str = f"${item['precio']}"
                 
                 ancho_precio = len(precio_str)
@@ -1343,7 +1555,7 @@ Cel: 3023942042"""
                 texto_item += f"{cant_str}{lineas_prod[0]}{' ' * espacios_medio}{precio_str}\n"
                 
                 for linea in lineas_prod[1:]:
-                    texto_item += f"     {linea}\n" # Mismos 5 espacios abajo
+                    texto_item += f"     {linea}\n"
 
                 self.txt_factura.insert(tk.END, texto_item)
                 texto_final += texto_item
@@ -1352,10 +1564,9 @@ Cel: 3023942042"""
                 for l in range(linea_inicio, linea_fin):
                     self.linea_a_item_idx[l] = idx
 
-        # --- Lógica de Devuelta ---
         recibido_str = self.entry_recibido.get().strip()
         recibido = int(recibido_str) if recibido_str.isdigit() else suma
-        if recibido < suma: recibido = suma # Evita devoluciones negativas por error
+        if recibido < suma: recibido = suma
         devuelta = recibido - suma
 
         pie = "\n" + "-" * ancho_total + "\n"
@@ -1418,70 +1629,37 @@ Cel: 3023942042"""
             self.entry_cant.focus_set()
             self.entry_cant.select_range(0, tk.END)
 
-    def subir_archivos_github(self):
-        if not os.path.exists(CONFIG_JSON): return
-
-        try:
-            with open(CONFIG_JSON, "r", encoding="utf-8") as f:
-                config_data = json.load(f)
-                TOKEN = config_data.get("github_token")
-        except Exception:
-            return
-
-        if not TOKEN or TOKEN == "apidegithub" or TOKEN.strip() == "": return
-
-        USUARIO = "MAOAZAking"
-        REPO = "panaderia_y_restaurante_mi_salsa"
-        archivos_a_subir = {"productos_y_precios.json": PROD_JSON, "clientes.json": CLI_JSON}
-
-        headers = {
-            "Authorization": f"Bearer {TOKEN}",
-            "Accept": "application/vnd.github.v3+json",
-            "User-Agent": "Python-App"
-        }
-
-        errores = []
-        for nombre_github, ruta_local in archivos_a_subir.items():
-            if not os.path.exists(ruta_local): continue
+    def verificar_y_preguntar_cambios_de_precio(self):
+        """Revisa los productos facturados para preguntar si el cambio de precio es permanente."""
+        cambios_realizados = False
+        for item in self.factura_items:
+            prod = item["prod"]
+            cant = item["cant"]
+            precio_cobrado = item["precio"]
             
-            url = f"https://api.github.com/repos/{USUARIO}/{REPO}/contents/{nombre_github}"
+            if prod == "domicilio" or cant <= 0:
+                continue
+                
+            precio_unitario_cobrado = precio_cobrado // cant
             
-            try:
-                with open(ruta_local, "rb") as f:
-                    contenido_base64 = base64.b64encode(f.read()).decode("utf-8")
-
-                req_get = urllib.request.Request(url, headers=headers)
-                sha = None
-                try:
-                    with urllib.request.urlopen(req_get, timeout=5) as response:
-                        data_github = json.loads(response.read().decode("utf-8"))
-                        sha = data_github.get("sha")
-                except urllib.error.HTTPError as e:
-                    pass
-
-                payload = {
-                    "message": "Actualización automática de POS tras emitir factura",
-                    "content": contenido_base64,
-                    "branch": "main"
-                }
-                if sha: payload["sha"] = sha
-                
-                data_json = json.dumps(payload).encode("utf-8")
-                req_put = urllib.request.Request(url, data=data_json, headers=headers, method="PUT")
-                
-                with urllib.request.urlopen(req_put, timeout=5) as response:
-                    pass
-            except Exception as e:
-                errores.append(f"Fallo al subir {nombre_github}: {str(e)}")
-                
-        if errores:
-            mensaje = "La factura se imprimió, pero falló GitHub.\n\nDetalles:\n" + "\n".join(errores)
-            messagebox.showerror("Error de Subida", mensaje)
+            if prod in self.productos_db:
+                precio_base = self.productos_db[prod].get("precio", 0)
+                if precio_base > 0 and precio_unitario_cobrado != precio_base:
+                    resp = messagebox.askyesno(
+                        "Confirmación de Cambio de Precio",
+                        f"El producto '{prod.capitalize()}' normalmente cuesta ${precio_base}, pero se vendió a ${precio_unitario_cobrado}.\n\n¿Deseas actualizar permanentemente este nuevo precio en la base de datos?"
+                    )
+                    if resp:
+                        self.productos_db[prod]["precio"] = precio_unitario_cobrado
+                        cambios_realizados = True
+        
+        if cambios_realizados:
+            self.guardar_json(PROD_JSON, self.productos_db)
+            github_queue.put(("productos_y_precios.json", PROD_JSON))
 
     def finalizar_factura(self, event):
         cliente_input = self.entry_cliente.get().strip()
         
-        # --- Alerta de Nombre Vacío ---
         if not cliente_input:
             respuesta = messagebox.askyesno(
                 "Falta Nombre", 
@@ -1495,30 +1673,36 @@ Cel: 3023942042"""
                 self.entry_cliente.insert(0, "CONSUMIDOR FINAL")
                 cliente_input = "CONSUMIDOR FINAL"
 
-        # Extrae el nombre limpio del cliente (sin NIT/CC) y formatea el nombre completo para la DB
         nombre_limpio_db, nit_cc = extraer_cliente_y_nit_cc(cliente_input)
         cliente_para_db = formatear_cliente_para_db(cliente_input)
 
         if cliente_para_db and cliente_para_db != "CONSUMIDOR FINAL" and cliente_para_db not in self.clientes_db:
             self.clientes_db.append(cliente_para_db)
             self.guardar_json(CLI_JSON, self.clientes_db)
+            github_queue.put(("clientes.json", CLI_JSON))
 
-        # Genera el texto final leyendo la hora exacta
+        # INCREMENTAR PESO DE LOS PRODUCTOS FACTURADOS
+        for item in self.factura_items:
+            p_name = item["prod"]
+            if p_name != "domicilio":
+                self.pesos_db[p_name] = self.pesos_db.get(p_name, 0) + 1
+        
+        self.guardar_json(PESOS_JSON, self.pesos_db)
+        github_queue.put(("pesos_productos.json", PESOS_JSON))
+
+        # PREGUNTAR POR CAMBIOS PERMANENTES DE PRECIO
+        self.verificar_y_preguntar_cambios_de_precio()
+
         ahora = datetime.now()
         texto_final = self.actualizar_vista_factura(ahora)
-
-        # Obtener el total acumulado de la factura actual
         suma_total = sum(item["precio"] for item in self.factura_items)
 
-        # Registrar la factura en el Excel general 'facturas.xlsx'
         registrar_factura_excel(nombre_limpio_db, suma_total, ahora)
 
-        # Si el método de pago seleccionado fue 'Anotar', se registra en 'cuenta_por_cobrar.xlsx'
         metodo_pago_ingresado = self.entry_pago.get().strip().lower()
         if metodo_pago_ingresado in ["a", "anotar"]:
             registrar_cuenta_por_cobrar(nombre_limpio_db, suma_total)
 
-        # --- Lógica de Carpetas por Fecha Actual ---
         meses = {1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril', 5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto', 9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre'}
         nombre_carpeta = f"{ahora.day}-{meses[ahora.month]}-{ahora.year}"
         ruta_carpeta = os.path.join(application_path, nombre_carpeta)
@@ -1526,7 +1710,6 @@ Cel: 3023942042"""
         if not os.path.exists(ruta_carpeta):
             os.makedirs(ruta_carpeta)
 
-        # Prepara el nombre de guardado del archivo
         nombre_archivo_cliente = "CONSUMIDOR_FINAL"
         if nombre_limpio_db:
             nombre_archivo_cliente = nombre_limpio_db.replace(" ", "_")
@@ -1535,7 +1718,6 @@ Cel: 3023942042"""
         nombre_archivo = f"{nombre_archivo_cliente}_{str_hora}.txt"
         ruta_archivo = os.path.join(ruta_carpeta, nombre_archivo)
 
-        # Guarda e Imprime
         try:
             with open(ruta_archivo, "w", encoding="utf-8") as f:
                 f.write(texto_final)
@@ -1546,10 +1728,8 @@ Cel: 3023942042"""
         try:
             os.startfile(ruta_archivo, "print")
             messagebox.showinfo("Factura Lista", f"¡Comprobante generado y enviado a la impresora!")
-        except Exception as e:
+        except Exception:
             messagebox.showinfo("Atención", f"Factura guardada.\n(No se pudo iniciar la impresora automáticamente)")
-
-        self.subir_archivos_github()
 
         # Limpiar Todo
         self.factura_items = []
@@ -1566,12 +1746,16 @@ Cel: 3023942042"""
         
         return "break"
 
+# ==========================================
+# PUNTO DE ENTRADA DE LA APLICACIÓN
+# ==========================================
 if __name__ == "__main__":
     root = tk.Tk()
     root.withdraw() 
     
-    descargar_archivos_github()
+    # Sincronización e inicialización básica
     crear_archivos_base_si_no_existen()
+    descargar_y_fusionar_github()
     
     root.deiconify()
     app = AppFacturacion(root)

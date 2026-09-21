@@ -2,12 +2,12 @@ import tkinter as tk
 from tkinter import messagebox
 import json
 import os
-from openpyxl import Workbook, load_workbook
 import sys
 from datetime import datetime
 import urllib.request
 import base64
 import re
+import openpyxl
 
 # ==========================================
 # CONFIGURACIÓN DE RUTAS Y ARCHIVOS JSON
@@ -20,6 +20,180 @@ else:
 PROD_JSON = os.path.join(application_path, "productos_y_precios.json")
 CLI_JSON = os.path.join(application_path, "clientes.json")
 CONFIG_JSON = os.path.join(application_path, "config.json")
+
+# ==========================================
+# FUNCIONES AUXILIARES Y DE EXCEL
+# ==========================================
+def es_bandeja(texto):
+    palabras = texto.lower().split()
+    for p in palabras:
+        if p.startswith("band") or p in ["bdja", "bandj", "bande"]:
+            return True
+    return False
+
+def es_almuerzo(texto):
+    palabras = texto.lower().split()
+    for p in palabras:
+        if p.startswith("almu") or p.startswith("amuer") or p in ["alm", "almuer"]:
+            return True
+    return False
+
+def extraer_cliente_y_nit_cc(cliente_input):
+    if not cliente_input or not cliente_input.strip():
+        return "Nombre", "222222222222"
+    
+    pattern = r'(?i)\b(nit|cc)\b[:.]?\s*([0-9\-]+)'
+    match = re.search(pattern, cliente_input)
+    
+    if match:
+        nit_cc = match.group(2)
+        nombre_limpio = re.sub(pattern, '', cliente_input).strip()
+        if not nombre_limpio:
+            nombre_limpio = "CONSUMIDOR FINAL"
+        else:
+            nombre_limpio = nombre_limpio.title() if nombre_limpio.lower() != "consumidor final" else "CONSUMIDOR FINAL"
+        return nombre_limpio, nit_cc
+    else:
+        nombre_limpio = cliente_input.strip()
+        nombre_limpio = nombre_limpio.title() if nombre_limpio.lower() != "consumidor final" else "CONSUMIDOR FINAL"
+        return nombre_limpio, "222222222222"
+
+def formatear_cliente_para_db(texto):
+    if not texto or not texto.strip():
+        return "CONSUMIDOR FINAL"
+    p_match = re.search(r'(?i)\b(nit|cc)\b[:.]?\s*([0-9\-]+)', texto)
+    if p_match:
+        tipo = p_match.group(1).upper()
+        num = p_match.group(2)
+        nombre_p = re.sub(r'(?i)\b(nit|cc)\b[:.]?\s*[0-9\-]+', '', texto).strip()
+        if nombre_p:
+            return f"{nombre_p.title()} {tipo} {num}"
+        else:
+            return f"{tipo} {num}"
+    else:
+        return texto.title() if texto.lower() != "consumidor final" else "CONSUMIDOR FINAL"
+
+def registrar_cuenta_por_cobrar(nombre_cliente, total):
+    try:
+        import openpyxl
+    except ImportError:
+        messagebox.showerror("Error Excel", "La librería 'openpyxl' no está instalada.")
+        return
+
+    ruta_xlsx = os.path.join(application_path, "cuenta_por_cobrar.xlsx")
+    ruta_xlxs = os.path.join(application_path, "cuenta_por_cobrar.xlxs")
+    ruta_final = ruta_xlxs if os.path.exists(ruta_xlxs) else ruta_xlsx
+
+    try:
+        if os.path.exists(ruta_final):
+            try:
+                wb = openpyxl.load_workbook(ruta_final)
+                ws = wb.active
+            except Exception:
+                wb = openpyxl.Workbook()
+                ws = wb.active
+                ws.title = "Cuentas por Cobrar"
+        else:
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "Cuentas por Cobrar"
+
+        val_a1 = str(ws.cell(row=1, column=1).value or "").strip()
+        if not val_a1:
+            ws.cell(row=1, column=1, value="NOMBRE")
+            ws.cell(row=1, column=2, value="METODO PAGO")
+            ws.cell(row=1, column=3, value="TOTAL")
+
+        ws.append([nombre_cliente, total])
+        wb.save(ruta_final)
+    except PermissionError:
+        messagebox.showwarning(
+            "Archivo Excel Abierto",
+            f"No se pudo actualizar '{os.path.basename(ruta_final)}' porque está abierto en Excel.\nPor favor ciérrelo para registrar la cuenta por cobrar."
+        )
+    except Exception as e:
+        messagebox.showerror("Error Excel", f"Error al guardar en cuenta por cobrar: {str(e)}")
+
+def registrar_factura_excel(nombre_cliente, total, fecha_hora):
+    try:
+        import openpyxl
+    except ImportError:
+        messagebox.showerror("Error Excel", "La librería 'openpyxl' no está instalada.")
+        return
+
+    meses = {
+        1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril', 5: 'mayo', 6: 'junio',
+        7: 'julio', 8: 'agosto', 9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre'
+    }
+    nombre_hoja_actual = f"{meses[fecha_hora.month]}-{fecha_hora.year}"
+    fecha_fmt = fecha_hora.strftime("%d/%m/%Y %H:%M")
+
+    ruta_xlsx = os.path.join(application_path, "facturas.xlsx")
+    ruta_xlxs = os.path.join(application_path, "facturas.xlxs")
+    ruta_final = ruta_xlxs if os.path.exists(ruta_xlxs) else ruta_xlsx
+
+    try:
+        if os.path.exists(ruta_final):
+            try:
+                wb = openpyxl.load_workbook(ruta_final)
+            except Exception:
+                wb = openpyxl.Workbook()
+        else:
+            wb = openpyxl.Workbook()
+
+        hoja_objetivo = None
+        if wb.worksheets:
+            ultima_hoja = wb.worksheets[-1]
+            mismo_mes = False
+
+            if ultima_hoja.title.lower() == nombre_hoja_actual.lower():
+                mismo_mes = True
+            else:
+                max_r = ultima_hoja.max_row
+                if max_r > 1:
+                    val_fecha = ultima_hoja.cell(row=max_r, column=4).value
+                    if val_fecha:
+                        val_str = str(val_fecha).strip()
+                        try:
+                            if isinstance(val_fecha, datetime):
+                                if val_fecha.month == fecha_hora.month and val_fecha.year == fecha_hora.year:
+                                    mismo_mes = True
+                            elif '/' in val_str:
+                                partes = val_str.split('/')
+                                if len(partes) >= 2 and int(partes[1]) == fecha_hora.month:
+                                    mismo_mes = True
+                        except Exception:
+                            pass
+
+            if mismo_mes:
+                hoja_objetivo = ultima_hoja
+            elif nombre_hoja_actual in wb.sheetnames:
+                hoja_objetivo = wb[nombre_hoja_actual]
+            else:
+                if len(wb.worksheets) == 1 and wb.worksheets[0].title in ["Sheet", "Hoja"] and wb.worksheets[0].max_row <= 1 and not wb.worksheets[0].cell(row=1, column=1).value:
+                    hoja_objetivo = wb.worksheets[0]
+                    hoja_objetivo.title = nombre_hoja_actual
+                else:
+                    hoja_objetivo = wb.create_sheet(title=nombre_hoja_actual)
+        else:
+            hoja_objetivo = wb.create_sheet(title=nombre_hoja_actual)
+
+        val_a1 = str(hoja_objetivo.cell(row=1, column=1).value or "").strip()
+        if not val_a1:
+            hoja_objetivo.cell(row=1, column=1, value="NOMBRE")
+            hoja_objetivo.cell(row=1, column=2, value="METODO DE PAGO")
+            hoja_objetivo.cell(row=1, column=3, value="TOTAL")
+            hoja_objetivo.cell(row=1, column=4, value="FECHA")
+
+        hoja_objetivo.append([nombre_cliente, total, fecha_fmt])
+        wb.save(ruta_final)
+    except PermissionError:
+        messagebox.showwarning(
+            "Archivo Excel Abierto",
+            f"No se pudo actualizar '{os.path.basename(ruta_final)}' porque está abierto en Excel.\nPor favor ciérrelo para registrar la factura."
+        )
+    except Exception as e:
+        messagebox.showerror("Error Excel", f"Error al guardar en facturas.xlsx: {str(e)}")
 
 # ==========================================
 # FUNCIONES DE ARRANQUE 
@@ -660,150 +834,151 @@ def crear_archivos_base_si_no_existen():
             json.dump(datos_base_prod, f, indent=4)
 
     if not os.path.exists(CLI_JSON):
+        datos_base_clien = {
+            "Hector Tmv",
+                "Termovapor",
+                "Sebastian Garcia (Prixma)",
+                "Juan Otero (Armametal)",
+                "Cristian (Tissue)",
+                "Yuli Laso (Porton Negro)",
+                "Edwin (Acrilan)",
+                "Julian Rios (Tissue)",
+                "Yoimer (Antiguo Control Papagayo)",
+                "Luisa (Arqustik)",
+                "Laura (Blockers Klhar)",
+                "Julian Jimenes (Grupo Textil)",
+                "Angie (Conaldesa)",
+                "Patricia (3 Piso)",
+                "Sara Grupo Textil",
+                "Juan Carlos (Bodega 13)",
+                "Manuel (Tmv)",
+                "Laminas Y Cortes Industriales Sa Nit 900035068-6",
+                "Guillermo (Galvanizado)",
+                "Jeimmy Valendia (Contactemos 1)",
+                "Harold (Aqustik)",
+                "Adelina (Cueva Del Humo)",
+                "Maria (Termovapor)",
+                "Susana (Bodega12)",
+                "Paola (Antiguo Control Papagayo)",
+                "Gabriela (Forraje)",
+                "Alejandro (Ingal Planta Fibra)",
+                "Katherin (Antiguo Control Papagayo)",
+                "Camilogutierrez (Motomart)",
+                "Viviana (Fundimetal)",
+                "Andrea (Tecnoempaques)",
+                "Fausto (Bodega 9)",
+                "Martha (Armametal)",
+                "Walter (Laminas Y Cortes)",
+                "David Silva (Tensoactivos)",
+                "Vanessa (Tissu)",
+                "Andera (Funales)",
+                "Coste\u00f1o (Grupo Textil)",
+                "Eduardo (Tintuvalle)",
+                ".",
+                "Felipe (Bodega 6)",
+                "Hector (Fabripunto)",
+                "Maria (Bronces)",
+                "Daniela Cardona (Berna)",
+                "Frank (Armametal)",
+                "Omar (Ipr)",
+                "Diana (Fundimetal)",
+                "Sofia (Rycarnes)",
+                "Jose (Rycarnes)",
+                "Guarda (Tisuu)",
+                "Uriel (Italcol - Cerca De Bomba Primax)",
+                "Marisol (Ecoindustrial)",
+                "Karen Dayana (Bodega 17 Donde El Paisa)",
+                "Johana (Sia Logistica)",
+                "Silquin Itda. Nit: 890325787",
+                "Silquin Itda Nit 890325787",
+                "Steven (Acrilan)",
+                "Victor Roman (Termovapor)",
+                "Wil Duque (Tensoactivos)",
+                "Abraham (Termovapor)",
+                "Fernanda Vargas (Grupotextil)",
+                "Estefania Cortez (Textiles Y Confecciones Del Valle)",
+                "Diana (El Paso Casa 169)",
+                "Luis Ramos (Holcim)",
+                "Yoselin (Intergrafic)",
+                "Tito (Megatextiles)",
+                "Luis (Tmv)",
+                "Mayra (Funales)",
+                "Duvan (Ingal Galvanizado)",
+                "Carolina",
+                "Carlos (Papagayo)",
+                "Leidy (Moto Mart)",
+                "Alexandra (Tissue)",
+                "Angie Suarez (Grupo Textil)",
+                "Sofia (Grupo Textil)",
+                "Deysi (Intergrafic)",
+                "Esteban (Jaramillo Mora)",
+                "Macar",
+                "Daniela (Ingal Fibra)",
+                "Yulieth Cuartas (Contactemos 2)",
+                "Marie Eco Equipos",
+                "Monica (Jaramillo Mora)",
+                "Jhonatan Zapata (Berna)",
+                "Jilary (Do\u00f1a Lupe)",
+                "Diana (Bodega 12)",
+                "Fabio Rodriguez (Remorques Dial)",
+                "Yeni (Armametal)",
+                "Camilo (Ipr Porteria 2)",
+                "Sandra Silba (Tisuue)",
+                "Ynmer (Fabrpunto)",
+                "Esteban (Grupo Textil)",
+                "Monica Posso (Corema)",
+                "Juan Carlos Diez (Bodega 13)",
+                "Alejandra (Sermac)",
+                "Alejandro Martinez",
+                "Yohana (Silquin)",
+                "Gloria Milena (Industrias Macar)",
+                "Sara Hernandez (Intergrafic)",
+                "Tensoactivos",
+                "Tmv",
+                "Radio (Termovapor)",
+                "Mishel Logistica (Tissue)",
+                "Daniela Olaya (Fadepal)",
+                "Contactamos Equipos Sas 805027728",
+                "Moffatt Nit 900152835-1",
+                "Arturo (Tubolaminas)",
+                "Tmi",
+                "Moffatt",
+                "Silquin Itda",
+                "Gabriel (Bodega 12)",
+                "Johana (Tintuvalle)",
+                "Marisol (Antiguo Control Papagayo)",
+                "Jaramillo Mora",
+                "Germ\u00e1n (Cueva Del Humo)",
+                "Isabel (Intergraphic)",
+                "Porteros (Tissue)",
+                "Julian (Motomart)",
+                "Giovanna (Bloques Klahr)",
+                "Ruben Cano (Jaramillo Mora)",
+                "Natalia (Remolques Dial)",
+                "Alvaro Campo (Diaco)",
+                "Andres (Tissue)",
+                "Ingal",
+                "Rodrigo (Prixma)",
+                "Jorge (Nuevo Control Papagayo)",
+                "Hector (Tmv)",
+                "Jeferson Toro (Armametal Principal)",
+                "Andres Amado (Proaceros)",
+                "Juan David Preciado (Tintuvalle)",
+                "Angela (Integrafic)",
+                "Yamileth (Fabripunto)",
+                "Alejandra (Berna)",
+                "Soexcol",
+                "Daniela (Tissue)",
+                "Soexco",
+                "Oscar (Porton Azul)",
+                "Lorena (Fabripunto)",
+                "Cecilia (Silquin)",
+                "Nestor (Bascula)",
+                "Raul Cardenas (Bodega 1)",
+                "Empresa Textiles Y Manofacturas Del Valle Sas"
+        }
         with open(CLI_JSON, 'w', encoding='utf-8') as f:
-            json.dump([
-    "Hector Tmv",
-    "Termovapor",
-    "Sebastian Garcia (Prixma)",
-    "Juan Otero (Armametal)",
-    "Cristian (Tissue)",
-    "Yuli Laso (Porton Negro)",
-    "Edwin (Acrilan)",
-    "Julian Rios (Tissue)",
-    "Yoimer (Antiguo Control Papagayo)",
-    "Luisa (Arqustik)",
-    "Laura (Blockers Klhar)",
-    "Julian Jimenes (Grupo Textil)",
-    "Angie (Conaldesa)",
-    "Patricia (3 Piso)",
-    "Sara Grupo Textil",
-    "Juan Carlos (Bodega 13)",
-    "Manuel (Tmv)",
-    "Laminas Y Cortes Industriales Sa Nit 900035068-6",
-    "Guillermo (Galvanizado)",
-    "Jeimmy Valendia (Contactemos 1)",
-    "Harold (Aqustik)",
-    "Adelina (Cueva Del Humo)",
-    "Maria (Termovapor)",
-    "Susana (Bodega12)",
-    "Paola (Antiguo Control Papagayo)",
-    "Gabriela (Forraje)",
-    "Alejandro (Ingal Planta Fibra)",
-    "Katherin (Antiguo Control Papagayo)",
-    "Camilogutierrez (Motomart)",
-    "Viviana (Fundimetal)",
-    "Andrea (Tecnoempaques)",
-    "Fausto (Bodega 9)",
-    "Martha (Armametal)",
-    "Walter (Laminas Y Cortes)",
-    "David Silva (Tensoactivos)",
-    "Vanessa (Tissu)",
-    "Andera (Funales)",
-    "Coste\u00f1o (Grupo Textil)",
-    "Eduardo (Tintuvalle)",
-    ".",
-    "Felipe (Bodega 6)",
-    "Hector (Fabripunto)",
-    "Maria (Bronces)",
-    "Daniela Cardona (Berna)",
-    "Frank (Armametal)",
-    "Omar (Ipr)",
-    "Diana (Fundimetal)",
-    "Sofia (Rycarnes)",
-    "Jose (Rycarnes)",
-    "Guarda (Tisuu)",
-    "Uriel (Italcol - Cerca De Bomba Primax)",
-    "Marisol (Ecoindustrial)",
-    "Karen Dayana (Bodega 17 Donde El Paisa)",
-    "Johana (Sia Logistica)",
-    "Silquin Itda. Nit: 890325787",
-    "Silquin Itda Nit 890325787",
-    "Steven (Acrilan)",
-    "Victor Roman (Termovapor)",
-    "Wil Duque (Tensoactivos)",
-    "Abraham (Termovapor)",
-    "Fernanda Vargas (Grupotextil)",
-    "Estefania Cortez (Textiles Y Confecciones Del Valle)",
-    "Diana (El Paso Casa 169)",
-    "Luis Ramos (Holcim)",
-    "Yoselin (Intergrafic)",
-    "Tito (Megatextiles)",
-    "Luis (Tmv)",
-    "Mayra (Funales)",
-    "Duvan (Ingal Galvanizado)",
-    "Carolina",
-    "Carlos (Papagayo)",
-    "Leidy (Moto Mart)",
-    "Alexandra (Tissue)",
-    "Angie Suarez (Grupo Textil)",
-    "Sofia (Grupo Textil)",
-    "Deysi (Intergrafic)",
-    "Esteban (Jaramillo Mora)",
-    "Macar",
-    "Daniela (Ingal Fibra)",
-    "Yulieth Cuartas (Contactemos 2)",
-    "Marie Eco Equipos",
-    "Monica (Jaramillo Mora)",
-    "Jhonatan Zapata (Berna)",
-    "Jilary (Do\u00f1a Lupe)",
-    "Diana (Bodega 12)",
-    "Fabio Rodriguez (Remorques Dial)",
-    "Yeni (Armametal)",
-    "Camilo (Ipr Porteria 2)",
-    "Sandra Silba (Tisuue)",
-    "Ynmer (Fabrpunto)",
-    "Esteban (Grupo Textil)",
-    "Monica Posso (Corema)",
-    "Juan Carlos Diez (Bodega 13)",
-    "Alejandra (Sermac)",
-    "Alejandro Martinez",
-    "Yohana (Silquin)",
-    "Gloria Milena (Industrias Macar)",
-    "Sara Hernandez (Intergrafic)",
-    "Tensoactivos",
-    "Tmv",
-    "Radio (Termovapor)",
-    "Mishel Logistica (Tissue)",
-    "Daniela Olaya (Fadepal)",
-    "Contactamos Equipos Sas 805027728",
-    "Moffatt Nit 900152835-1",
-    "Arturo (Tubolaminas)",
-    "Tmi",
-    "Moffatt",
-    "Silquin Itda",
-    "Gabriel (Bodega 12)",
-    "Johana (Tintuvalle)",
-    "Marisol (Antiguo Control Papagayo)",
-    "Jaramillo Mora",
-    "Germ\u00e1n (Cueva Del Humo)",
-    "Isabel (Intergraphic)",
-    "Porteros (Tissue)",
-    "Julian (Motomart)",
-    "Giovanna (Bloques Klahr)",
-    "Ruben Cano (Jaramillo Mora)",
-    "Natalia (Remolques Dial)",
-    "Alvaro Campo (Diaco)",
-    "Andres (Tissue)",
-    "Ingal",
-    "Rodrigo (Prixma)",
-    "Jorge (Nuevo Control Papagayo)",
-    "Hector (Tmv)",
-    "Jeferson Toro (Armametal Principal)",
-    "Andres Amado (Proaceros)",
-    "Juan David Preciado (Tintuvalle)",
-    "Angela (Integrafic)",
-    "Yamileth (Fabripunto)",
-    "Alejandra (Berna)",
-    "Soexcol",
-    "Daniela (Tissue)",
-    "Soexco",
-    "Oscar (Porton Azul)",
-    "Lorena (Fabripunto)",
-    "Cecilia (Silquin)",
-    "Nestor (Bascula)",
-    "Raul Cardenas (Bodega 1)",
-    "Empresa Textiles Y Manofacturas Del Valle Sas"
-], f, indent=4)
+            json.dump([datos_base_clien], f, indent=4)
 
 # ==========================================
 # CLASE PRINCIPAL DE LA APLICACIÓN
@@ -869,7 +1044,7 @@ class AppFacturacion:
 
         tk.Frame(frame_izq, height=2, bg="#ccc").pack(fill="x", pady=10)
 
-        tk.Label(frame_izq, text="Forma de Pago (Efectivo/Nequi):", bg="#f4f4f4").pack(anchor="w")
+        tk.Label(frame_izq, text="Forma de Pago (Efectivo/Nequi/Anotar):", bg="#f4f4f4").pack(anchor="w")
         self.entry_pago = tk.Entry(frame_izq, font=("Arial", 12))
         self.entry_pago.pack(fill="x", pady=5)
         self.entry_pago.bind("<KeyRelease>", self.toggle_pago)
@@ -883,7 +1058,7 @@ class AppFacturacion:
         self.entry_recibido.bind("<Return>", self.on_recibido_enter)
         self.entry_recibido.bind("<KeyRelease>", lambda e: self.actualizar_vista_factura())
 
-        tk.Label(frame_izq, text="Cliente (Para NIT agregar la palabra 'nit'):", bg="#f4f4f4").pack(anchor="w", pady=(5,0))
+        tk.Label(frame_izq, text="Cliente (Para NIT o CC agregar 'nit' o 'cc'):", bg="#f4f4f4").pack(anchor="w", pady=(5,0))
         self.entry_cliente = tk.Entry(frame_izq, font=("Arial", 12))
         self.entry_cliente.pack(fill="x", pady=5)
         
@@ -945,7 +1120,11 @@ class AppFacturacion:
         cant = int(cant_str)
         precio_total = 0
         
-        if producto in self.productos_db:
+        if es_bandeja(producto):
+            precio_total = cant * 14000
+        elif es_almuerzo(producto):
+            precio_total = cant * 16000
+        elif producto in self.productos_db:
             info = self.productos_db[producto]
             if "promocion" in info:
                 promo = info["promocion"]
@@ -986,7 +1165,7 @@ class AppFacturacion:
         self.factura_items = [item for item in self.factura_items if item["prod"] != "domicilio"]
         self.factura_items.append({"cant": cant, "prod": prod, "precio": precio_total})
         
-        hay_almuerzo = any(any(kw in item["prod"].lower() for kw in ["almuer", "amuer", "bande"]) for item in self.factura_items)
+        hay_almuerzo = any(es_almuerzo(item["prod"]) or es_bandeja(item["prod"]) for item in self.factura_items)
         if not hay_almuerzo and not self.domicilio_eliminado and len(self.factura_items) > 0:
             self.factura_items.append({"cant": 1, "prod": "domicilio", "precio": 1000})
 
@@ -1006,12 +1185,17 @@ class AppFacturacion:
         elif val == "n":
             self.entry_pago.delete(0, tk.END)
             self.entry_pago.insert(0, "Nequi")
+        elif val == "a":
+            self.entry_pago.delete(0, tk.END)
+            self.entry_pago.insert(0, "Anotar")
 
     def toggle_pago_flechas(self, event):
         actual = self.entry_pago.get().lower()
         self.entry_pago.delete(0, tk.END)
         if "efectivo" in actual:
             self.entry_pago.insert(0, "Nequi")
+        elif "nequi" in actual:
+            self.entry_pago.insert(0, "Anotar")
         else:
             self.entry_pago.insert(0, "Efectivo")
 
@@ -1023,11 +1207,11 @@ class AppFacturacion:
         elif val in ["n", "nequi"]:
             self.entry_pago.delete(0, tk.END)
             self.entry_pago.insert(0, "Nequi")
-        elif val in ["a", "Anotar"]:
+        elif val in ["a", "anotar"]:
             self.entry_pago.delete(0, tk.END)
             self.entry_pago.insert(0, "Anotar")
         else:
-            messagebox.showwarning("Atención", "Escriba 'e' para Efectivo o 'n' para Nequi.")
+            messagebox.showwarning("Atención", "Escriba 'e' para Efectivo, 'n' para Nequi o 'a' para Anotar.")
             self.entry_pago.focus_set()
             return "break"
         
@@ -1075,25 +1259,15 @@ class AppFacturacion:
         fecha_str = fecha_hora.strftime("%d/%m/%Y")
         hora_str = fecha_hora.strftime("%H:%M")
 
-        # --- Lógica de Extracción de Cliente y NIT ---
+        # --- Lógica de Extracción de Cliente y NIT / CC ---
         cliente_input = self.entry_cliente.get().strip()
-        nit_cc = "222222222222"
-        nombre_cliente = cliente_input
+        nombre_cliente, nit_cc = extraer_cliente_y_nit_cc(cliente_input)
 
-        if cliente_input:
-            match = re.search(r'nit\s*([0-9\-]+)', cliente_input.lower())
-            if match:
-                nit_cc = match.group(1)
-                nombre_cliente = re.sub(r'(?i)nit\s*[0-9\-]+', '', cliente_input).strip()
-            
-            if not nombre_cliente:
-                nombre_cliente = "CONSUMIDOR FINAL"
-            else:
-                nombre_cliente = nombre_cliente.upper() if nombre_cliente == "CONSUMIDOR FINAL" else nombre_cliente.title()
+        metodo_pago_raw = self.entry_pago.get().strip() or "Efectivo"
+        if metodo_pago_raw.lower() == "anotar":
+            metodo_pago = "Efectivo"
         else:
-            nombre_cliente = "Nombre"
-
-        metodo_pago = self.entry_pago.get().strip().title() or "Efectivo"
+            metodo_pago = metodo_pago_raw.title()
 
         ancho_total = 29
         def centrar(texto):
@@ -1101,17 +1275,17 @@ class AppFacturacion:
 
         encabezado_negocio = """PANADERIA Y RESTAURANTE
 MI SALSA
-Nit: 1130598879
+Nit: 1130598879-6
 Dir: CALLE 1 # TV. 1-250
 Cel: 3023942042"""
 
         encabezado = centrar(encabezado_negocio) + "\n\n\n"
-        encabezado += f"FACTURA ELECTRONICA DE VENTA\n\n\n"
-        encabezado += f"Cajero        : Miguel Angel O.\n"
-        encabezado += f"Fecha         : {fecha_str} HORA: {hora_str}\n"
-        encabezado += f"Forma de pago : {metodo_pago}\n"
-        encabezado += f"Cliente       : {nombre_cliente}\n"
-        encabezado += f"Nit/CC        : {nit_cc}\n"
+        encabezado += f"FACTURA DE VENTA\n\n\n"
+        encabezado += f"Cajero       : Miguel Angel O.\n"
+        encabezado += f"Fecha        : {fecha_str} HORA: {hora_str}\n"
+        encabezado += f"Forma de pago: {metodo_pago}\n"
+        encabezado += f"Cliente      : {nombre_cliente}\n"
+        encabezado += f"Nit/CC       : {nit_cc}\n"
         encabezado += "-" * ancho_total + "\n"
         
         # Títulos de las columnas alineados (Cant 5, Produc, Total derecha)
@@ -1322,22 +1496,28 @@ Cel: 3023942042"""
                 self.entry_cliente.insert(0, "CONSUMIDOR FINAL")
                 cliente_input = "CONSUMIDOR FINAL"
 
-        # Guarda el cliente limpio de NIT en la base de datos local
-        nombre_limpio_db = cliente_input
-        match_db = re.search(r'(?i)nit\s*[0-9\-]+', cliente_input)
-        if match_db:
-            n = re.sub(r'(?i)nit\s*[0-9\-]+', '', cliente_input).strip()
-            if n: nombre_limpio_db = n.title()
-        else:
-            nombre_limpio_db = cliente_input.title() if cliente_input != "CONSUMIDOR FINAL" else cliente_input
+        # Extrae el nombre limpio del cliente (sin NIT/CC) y formatea el nombre completo para la DB
+        nombre_limpio_db, nit_cc = extraer_cliente_y_nit_cc(cliente_input)
+        cliente_para_db = formatear_cliente_para_db(cliente_input)
 
-        if nombre_limpio_db and nombre_limpio_db != "CONSUMIDOR FINAL" and nombre_limpio_db not in self.clientes_db:
-            self.clientes_db.append(nombre_limpio_db)
+        if cliente_para_db and cliente_para_db != "CONSUMIDOR FINAL" and cliente_para_db not in self.clientes_db:
+            self.clientes_db.append(cliente_para_db)
             self.guardar_json(CLI_JSON, self.clientes_db)
 
         # Genera el texto final leyendo la hora exacta
         ahora = datetime.now()
         texto_final = self.actualizar_vista_factura(ahora)
+
+        # Obtener el total acumulado de la factura actual
+        suma_total = sum(item["precio"] for item in self.factura_items)
+
+        # Registrar la factura en el Excel general 'facturas.xlsx'
+        registrar_factura_excel(nombre_limpio_db, suma_total, ahora)
+
+        # Si el método de pago seleccionado fue 'Anotar', se registra en 'cuenta_por_cobrar.xlsx'
+        metodo_pago_ingresado = self.entry_pago.get().strip().lower()
+        if metodo_pago_ingresado in ["a", "anotar"]:
+            registrar_cuenta_por_cobrar(nombre_limpio_db, suma_total)
 
         # --- Lógica de Carpetas por Fecha Actual ---
         meses = {1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril', 5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto', 9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre'}
