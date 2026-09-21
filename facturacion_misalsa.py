@@ -101,7 +101,8 @@ def registrar_cuenta_por_cobrar(nombre_cliente, total):
         val_a1 = str(ws.cell(row=1, column=1).value or "").strip()
         if not val_a1:
             ws.cell(row=1, column=1, value="NOMBRE")
-            ws.cell(row=1, column=2, value="TOTAL")
+            ws.cell(row=1, column=2, value="METODO PAGO")
+            ws.cell(row=1, column=3, value="TOTAL")
 
         ws.append([nombre_cliente, total])
         wb.save(ruta_final)
@@ -150,7 +151,7 @@ def registrar_factura_excel(nombre_cliente, total, fecha_hora):
             else:
                 max_r = ultima_hoja.max_row
                 if max_r > 1:
-                    val_fecha = ultima_hoja.cell(row=max_r, column=3).value
+                    val_fecha = ultima_hoja.cell(row=max_r, column=4).value
                     if val_fecha:
                         val_str = str(val_fecha).strip()
                         try:
@@ -180,8 +181,9 @@ def registrar_factura_excel(nombre_cliente, total, fecha_hora):
         val_a1 = str(hoja_objetivo.cell(row=1, column=1).value or "").strip()
         if not val_a1:
             hoja_objetivo.cell(row=1, column=1, value="NOMBRE")
-            hoja_objetivo.cell(row=1, column=2, value="TOTAL")
-            hoja_objetivo.cell(row=1, column=3, value="FECHA")
+            hoja_objetivo.cell(row=1, column=2, value="METODO DE PAGO")
+            hoja_objetivo.cell(row=1, column=3, value="TOTAL")
+            hoja_objetivo.cell(row=1, column=4, value="FECHA")
 
         hoja_objetivo.append([nombre_cliente, total, fecha_fmt])
         wb.save(ruta_final)
@@ -1277,7 +1279,7 @@ Dir: CALLE 1 # TV. 1-250
 Cel: 3023942042"""
 
         encabezado = centrar(encabezado_negocio) + "\n\n\n"
-        encabezado += f"FACTURA DIGITAL DE VENTA\n\n\n"
+        encabezado += f"FACTURA DE VENTA\n\n\n"
         encabezado += f"Cajero       : Miguel Angel O.\n"
         encabezado += f"Fecha        : {fecha_str} HORA: {hora_str}\n"
         encabezado += f"Forma de pago: {metodo_pago}\n"
