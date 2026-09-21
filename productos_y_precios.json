@@ -595,5 +595,35 @@
     },
     "bandeja firjoles, chuleta de pollo": {
         "precio": 14000
+    },
+    "desayuno completo perico, cafe en leche": {
+        "precio": 10500
+    },
+    "desayuno completo revuelto (sin cafe)": {
+        "precio": 6500
+    },
+    "bonyourt": {
+        "precio": 5000
+    },
+    "almuerzo completo ajiaco, lenteja, res asada": {
+        "precio": 16000
+    },
+    "colombiana 1.5l": {
+        "precio": 6000
+    },
+    "bandeja spaguetis, chuleta de pollo": {
+        "precio": 14000
+    },
+    "almuerzo completo sancocho pescado, blanquillos, pescado en crema de leche": {
+        "precio": 16000
+    },
+    "porcion de res asada": {
+        "precio": 6000
+    },
+    "carne en bistec (sin cafe)": {
+        "precio": 11000
+    },
+    "glaceal uva 1.7l": {
+        "precio": 6000
     }
 }
