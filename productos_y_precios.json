@@ -619,5 +619,8 @@
     },
     "almuerzo sancocho, (frijol/pure), filete de pollo": {
         "precio": 16000
+    },
+    "desayuno completo perico, cafe en leche": {
+        "precio": 11000
     }
 }
