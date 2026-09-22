@@ -333,7 +333,7 @@
         "precio": 500
     },
     "jugo valle personal": {
-        "precio": 2500
+        "precio": 3000
     },
     "huevo perico, arroz, pan": {
         "precio": 8500
@@ -619,8 +619,5 @@
     },
     "almuerzo sancocho, (frijol/pure), filete de pollo": {
         "precio": 16000
-    },
-    "jugo fruttsi mango 1l": {
-        "precio": 6000
     }
 }
