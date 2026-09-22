@@ -619,5 +619,8 @@
     },
     "almuerzo sancocho, (frijol/pure), filete de pollo": {
         "precio": 16000
+    },
+    "jugo fruttsi mango 1l": {
+        "precio": 6000
     }
 }
