@@ -631,5 +631,8 @@
     },
     "almuerzo completo sopa, alverja, filete de pollo": {
         "precio": 16000
+    },
+    "huevos cocidos": {
+        "precio": 1300
     }
 }
