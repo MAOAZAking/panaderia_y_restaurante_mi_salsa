@@ -13,15 +13,15 @@
     "almuerzo sancocho, (frijol/pure), filete de pollo": 1,
     "pepsi 3.125l": 1,
     "pan 5000": 3,
-    "pan queso": 4,
+    "pan queso": 5,
     "pan abuela": 1,
     "jugo fruttsi mango 1l": 1,
     "arepita": 2,
     "porcion huevo ranchero": 1,
     "croissant": 1,
-    "pandebono": 1,
-    "bu\u00f1uelo": 1,
-    "pan hawaiano": 1,
+    "pandebono": 2,
+    "bu\u00f1uelo": 2,
+    "pan hawaiano": 2,
     "almuerzo completo sopa, alverja, pollo sudado": 1,
     "bandeja frijoles, res asada": 1,
     "almuerzo completo sopa, alverja, filete de pollo": 1,
@@ -31,5 +31,7 @@
     "pan 2000": 1,
     "cocacola 1.5l": 2,
     "pan agridulce": 1,
-    "achira": 1
+    "achira": 1,
+    "huevos cocidos": 1,
+    "yogurt mora": 1
 }
