@@ -640,5 +640,8 @@
     },
     "tortica cumplea\u00f1os": {
         "precio": 20000
+    },
+    "limonada": {
+        "precio": 1000
     }
 }
