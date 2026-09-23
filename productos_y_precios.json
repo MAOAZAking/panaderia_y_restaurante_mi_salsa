@@ -643,5 +643,8 @@
     },
     "limonada": {
         "precio": 1000
+    },
+    "colombiana 1.5l": {
+        "precio": 6000
     }
 }
