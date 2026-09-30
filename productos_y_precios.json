@@ -655,5 +655,8 @@
     },
     "bandeja frijol y filete de cerdo": {
         "precio": 14000
+    },
+    "porcion lentejas": {
+        "precio": 6000
     }
 }
