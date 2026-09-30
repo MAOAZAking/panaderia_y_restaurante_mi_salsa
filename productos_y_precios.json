@@ -646,5 +646,8 @@
     },
     "colombiana 1.5l": {
         "precio": 6000
+    },
+    "almuerzo completo ajiaco, arroz con pollo": {
+        "precio": 16000
     }
 }
