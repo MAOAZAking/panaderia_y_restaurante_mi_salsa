@@ -658,5 +658,8 @@
     },
     "porcion lentejas": {
         "precio": 6000
+    },
+    "almuerzo completo ajiaco, alverja, filete pollo": {
+        "precio": 16000
     }
 }
