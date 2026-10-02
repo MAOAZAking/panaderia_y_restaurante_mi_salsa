@@ -676,5 +676,8 @@
     },
     "almuerzo completo sancocho de pescado, lentejas, pescado sudado": {
         "precio": 16000
+    },
+    "bandeja lentejas, chuleta de pollo": {
+        "precio": 14000
     }
 }
