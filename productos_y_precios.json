@@ -10,7 +10,7 @@
         }
     },
     "pan queso": {
-        "precio": 700,
+        "precio": 666,
         "promocion": {
             "cantidad": 3,
             "precio_promo": 2000
@@ -663,6 +663,18 @@
         "precio": 16000
     },
     "almuerzo completo ajiaco, firjol, chuleta de pollo": {
+        "precio": 16000
+    },
+    "cafe negro grande": {
+        "precio": 3000
+    },
+    "omelette": {
+        "precio": 6000
+    },
+    "almuerzo completo sancocho pescado,  sudado de pescado, lentejas": {
+        "precio": 16000
+    },
+    "almuerzo completo sancocho de pescado, lentejas, pescado sudado": {
         "precio": 16000
     }
 }
