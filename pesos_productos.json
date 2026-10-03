@@ -8,13 +8,13 @@
     "carne en bistec, cafe en leche": 1,
     "pan 500": 4,
     "desayuno completo perico (sin cafe)": 1,
-    "cafe en leche": 4,
+    "cafe en leche": 3,
     "pan salchicha": 1,
     "almuerzo sancocho, (frijol/pure), filete de pollo": 1,
     "pepsi 3.125l": 1,
     "pan 5000": 3,
-    "pan queso": 9,
-    "pan abuela": 3,
+    "pan queso": 7,
+    "pan abuela": 2,
     "jugo fruttsi mango 1l": 1,
     "arepita": 2,
     "porcion huevo ranchero": 1,
@@ -38,7 +38,7 @@
     "bandeja arroz con pollo": 2,
     "limonada": 1,
     "colombiana 1.5l": 1,
-    "almuerzo completo": 1,
+    "almuerzo completo": 2,
     "almuerzo completo ajiaco, arroz con pollo": 2,
     "pony malta 2 l": 1,
     "bandeja frijol y filete de cerdo": 1,
@@ -53,6 +53,5 @@
     "almuerzo completo sancocho de pescado, lentejas, pescado sudado": 1,
     "almuerzo completo consome, frijol, chuleta de pollo": 1,
     "bandeja lentejas, chuleta de pollo": 1,
-    "pepsi 1.75l": 2,
-    "glacear uva 1.7l": 1
+    "pepsi 1.75l": 2
 }
