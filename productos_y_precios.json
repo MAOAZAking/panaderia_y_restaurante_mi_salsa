@@ -700,5 +700,8 @@
     },
     "almuerzo completo sancocho, frijol, chuleta de pollo": {
         "precio": 16000
+    },
+    "bandeja frijol, chuleta de pollo": {
+        "precio": 14000
     }
 }
