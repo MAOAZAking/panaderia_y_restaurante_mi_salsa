@@ -697,5 +697,8 @@
     },
     "porcion de sopa": {
         "precio": 6000
+    },
+    "almuerzo completo sancocho, frijol, chuleta de pollo": {
+        "precio": 16000
     }
 }
