@@ -682,5 +682,11 @@
     },
     "bandeja frijoles, chuleta cerdo (sin ensalada)": {
         "precio": 14000
+    },
+    "leche klim": {
+        "precio": 2000
+    },
+    "almuerzo completo sancocho, frijoles, carne asada": {
+        "precio": 16000
     }
 }
