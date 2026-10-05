@@ -36,7 +36,7 @@
     "yogurt mora": 1,
     "tortica cumplea\u00f1os": 2,
     "bandeja arroz con pollo": 2,
-    "limonada": 1,
+    "limonada": 2,
     "colombiana 1.5l": 1,
     "almuerzo completo": 2,
     "almuerzo completo ajiaco, arroz con pollo": 2,
@@ -60,5 +60,6 @@
     "leche klim": 1,
     "almuerzo completo sancocho, frijoles, carne asada": 1,
     "almuerzo completo sancocho, frijol, res asada": 1,
-    "almuerzo completo sancocho, frijol, chuleta de cerdo": 1
+    "almuerzo completo sancocho, frijol, chuleta de cerdo": 1,
+    "porcion de sopa": 1
 }
