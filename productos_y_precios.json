@@ -691,5 +691,8 @@
     },
     "almuerzo completo sancocho, frijol, res asada": {
         "precio": 16000
+    },
+    "almuerzo completo sancocho, frijol, chuleta de cerdo": {
+        "precio": 16000
     }
 }
