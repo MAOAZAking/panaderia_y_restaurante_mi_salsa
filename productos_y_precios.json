@@ -694,5 +694,8 @@
     },
     "almuerzo completo sancocho, frijol, chuleta de cerdo": {
         "precio": 16000
+    },
+    "porcion de sopa": {
+        "precio": 6000
     }
 }
