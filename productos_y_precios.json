@@ -709,5 +709,8 @@
     },
     "almuerzo completo, sancocho, pollo sudado a la criolla (sin principio, mas ensalada)": {
         "precio": 16000
+    },
+    "agua saborizada uva verde": {
+        "precio": 3500
     }
 }
