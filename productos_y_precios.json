@@ -712,5 +712,8 @@
     },
     "agua saborizada uva verde": {
         "precio": 3500
+    },
+    "almuerzo completo sopa de verduras, frijol, chuleta de cerdo": {
+        "precio": 16000
     }
 }
