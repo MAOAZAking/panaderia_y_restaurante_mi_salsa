@@ -204,7 +204,7 @@
         "precio": 8000
     },
     "cocacola personal": {
-        "precio": 4000
+        "precio": 3500
     },
     "papel higienico": {
         "precio": 2000
@@ -713,7 +713,7 @@
     "agua saborizada uva verde": {
         "precio": 3500
     },
-    "almuerzo completo sopa de verduras, frijol, chuleta de cerdo": {
-        "precio": 16000
+    "combo torta cumplea\u00f1os": {
+        "precio": 20000
     }
 }
