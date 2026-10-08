@@ -19,7 +19,7 @@
     "arepita": 8,
     "porcion huevo ranchero": 1,
     "croissant": 2,
-    "pandebono": 8,
+    "pandebono": 9,
     "bu\u00f1uelo": 6,
     "pan hawaiano": 7,
     "almuerzo completo sopa, alverja, pollo sudado": 1,
@@ -46,7 +46,7 @@
     "almuerzo completo ajiaco, alverja, filete pollo": 1,
     "almuerzo completo ajiaco, firjol, chuleta de pollo": 1,
     "cafe negro grande": 1,
-    "omelette": 1,
+    "omelette": 2,
     "desayuno completo cacerola, cafe en leche": 1,
     "jugo hit lulo": 1,
     "almuerzo completo sancocho pescado,  sudado de pescado, lentejas": 1,
@@ -71,5 +71,7 @@
     "agua saborizada uva verde": 1,
     "pan coco": 1,
     "porcion huevo revuelto": 1,
-    "combo torta cumplea\u00f1os": 1
+    "combo torta cumplea\u00f1os": 1,
+    "mil hojas": 1,
+    "milo frio": 1
 }
