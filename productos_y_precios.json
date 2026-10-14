@@ -718,5 +718,8 @@
     },
     "almuerzo completo sopa de verduras, arbejas filete de pollo": {
         "precio": 16000
+    },
+    "bandeja pasta, chuleta de cerdo": {
+        "precio": 14000
     }
 }
