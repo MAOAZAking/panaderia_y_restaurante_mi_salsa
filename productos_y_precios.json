@@ -721,5 +721,8 @@
     },
     "torta cumplea\u00f1os": {
         "precio": 20000
+    },
+    "bandejas": {
+        "precio": 14000
     }
 }
