@@ -727,5 +727,8 @@
     },
     "pony malta 1 l": {
         "precio": 6000
+    },
+    "almuerzo completo sopa platano, blanquillo, filete de pollo": {
+        "precio": 16000
     }
 }
