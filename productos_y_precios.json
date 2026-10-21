@@ -742,5 +742,8 @@
     },
     "almuerzo completo ajiaco, frijol, filete de pollo": {
         "precio": 16000
+    },
+    "almuerzo completo ajiaco, frijol, chuleta de cerdo": {
+        "precio": 16000
     }
 }
