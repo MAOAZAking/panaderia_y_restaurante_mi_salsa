@@ -558,7 +558,7 @@
         "precio": 3000
     },
     "gaseosa manzana personal": {
-        "precio": 3500
+        "precio": 3000
     },
     "bandeja lenteja, frilete de pollo": {
         "precio": 14000
@@ -731,7 +731,7 @@
     "almuerzo completo sopa platano, blanquillo, filete de pollo": {
         "precio": 16000
     },
-    "desayuno completo cacerola (sin cafe)": {
-        "precio": 6500
+    "porcion huevo cacerola": {
+        "precio": 4500
     }
 }
