@@ -745,5 +745,8 @@
     },
     "almuerzo completo ajiaco, frijol, chuleta de cerdo": {
         "precio": 16000
+    },
+    "almuerzo completo lenteja, res asada": {
+        "precio": 16000
     }
 }
