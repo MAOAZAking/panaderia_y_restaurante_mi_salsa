@@ -739,5 +739,8 @@
     },
     "almuerzo completo (sin ajiaco, ni ensalada)": {
         "precio": 14000
+    },
+    "almuerzo completo ajiaco, frijol, filete de pollo": {
+        "precio": 16000
     }
 }
