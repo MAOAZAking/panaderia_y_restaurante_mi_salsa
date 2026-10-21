@@ -453,7 +453,7 @@
         "precio": 6000
     },
     "desayuno completo perico (sin cafe)": {
-        "precio": 8000
+        "precio": 8500
     },
     "porcion caldo de costilla": {
         "precio": 6000
@@ -558,7 +558,7 @@
         "precio": 3000
     },
     "gaseosa manzana personal": {
-        "precio": 3000
+        "precio": 3500
     },
     "bandeja lenteja, frilete de pollo": {
         "precio": 14000
@@ -730,5 +730,8 @@
     },
     "almuerzo completo sopa platano, blanquillo, filete de pollo": {
         "precio": 16000
+    },
+    "desayuno completo cacerola (sin cafe)": {
+        "precio": 6500
     }
 }
