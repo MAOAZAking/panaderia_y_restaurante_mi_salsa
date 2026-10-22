@@ -751,5 +751,8 @@
     },
     "porcion de filete de pollo": {
         "precio": 7000
+    },
+    "porcion papas": {
+        "precio": 6000
     }
 }
