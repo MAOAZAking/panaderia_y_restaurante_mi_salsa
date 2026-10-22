@@ -748,5 +748,8 @@
     },
     "almuerzo completo pescado": {
         "precio": 16000
+    },
+    "porcion de filete de pollo": {
+        "precio": 7000
     }
 }
