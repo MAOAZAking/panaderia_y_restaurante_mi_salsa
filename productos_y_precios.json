@@ -754,5 +754,8 @@
     },
     "porcion papas": {
         "precio": 6000
+    },
+    "almuerzo completos": {
+        "precio": 16000
     }
 }
