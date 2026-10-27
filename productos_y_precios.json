@@ -757,5 +757,8 @@
     },
     "almuerzo completos": {
         "precio": 16000
+    },
+    "alm": {
+        "precio": 16000
     }
 }
