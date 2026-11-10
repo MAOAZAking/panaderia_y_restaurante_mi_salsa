@@ -20,7 +20,7 @@
     "porcion huevo ranchero": 1,
     "croissant": 5,
     "pandebono": 10,
-    "bu\u00f1uelo": 7,
+    "bu\u00f1uelo": 8,
     "pan hawaiano": 8,
     "almuerzo completo sopa, alverja, pollo sudado": 1,
     "bandeja frijoles, res asada": 1,
@@ -38,7 +38,7 @@
     "bandeja arroz con pollo": 3,
     "limonada": 2,
     "colombiana 1.5l": 1,
-    "almuerzo completo": 24,
+    "almuerzo completo": 25,
     "almuerzo completo ajiaco, arroz con pollo": 3,
     "pony malta 2 l": 1,
     "bandeja frijol y filete de cerdo": 1,
@@ -95,5 +95,6 @@
     "almuerzo completo ajiaco, frijol, chuleta de cerdo (sin ensalada))": 1,
     "almuerzo completo pescado": 1,
     "almuerzo completos": 1,
-    "alm": 1
+    "alm": 1,
+    "gaseosa 3 litros": 1
 }
